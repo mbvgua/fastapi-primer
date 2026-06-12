@@ -1,3 +1,7 @@
+# python stuff
+.venv/
+__pycache__
+
+# extras
 tutorial/
 docs/
-.venv/
