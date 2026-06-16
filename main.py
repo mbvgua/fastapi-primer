@@ -36,6 +36,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.status import HTTP_201_CREATED
+
+from validators import PostCreate, PostResponse
 
 app = FastAPI()
 # load css & html
@@ -79,7 +82,7 @@ def home(request: Request):
     )
 
 
-@app.get("/posts/{post_id}")
+@app.get("/posts/{post_id}", include_in_schema=False)
 def get_post(post_id: int, request: Request):
     """
     return a single post if it exists, otherwise returns appropriate error
@@ -97,7 +100,26 @@ def get_post(post_id: int, request: Request):
 
 
 # API JSON Responses
-@app.get("/api/posts")
+@app.post("/api/posts/", response_model=PostResponse, status_code=HTTP_201_CREATED)
+def create_post(post: PostCreate):
+    """
+    endpoint for creating posts in JSON format
+    """
+    # create new post id, appending by 1 to the existing, else makeit 1
+    new_id = max(post["id"] for post in posts) + 1 if posts else 1
+
+    new_post = {
+        "id": new_id,
+        "author": post.author,
+        "title": post.title,
+        "content": post.content,
+        "date_posted": "January 01,2025",
+    }
+    posts.append(new_post)
+    return new_post
+
+
+@app.get("/api/posts/", response_model=list[PostResponse])
 def get_posts_api():
     """
     API endpoint to return all posts within the application in JSON format
@@ -106,7 +128,7 @@ def get_posts_api():
 
 
 @app.get("/api/posts/{post_id}")
-def get_post_api(post_id: int):
+def get_post_api(post_id: int, response_model=PostResponse):
     """
     return specific post by narrowing down with its ID
     """
