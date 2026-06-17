@@ -6,7 +6,7 @@ to [Corey Schafer's](https://youtube.com/playlist?list=PL-osiE80TeTsak-c-QsVeg0Y
 Core technologies learnt:
 - [X] using jinja2 templates
 - [X] styling with bootstrap
-- [ ] validation and error handling
+- [X] validation and error handling
 - [ ] pydantic schemas & models for data validation
 - [ ] using SQLAlchemy ORM 
 - [ ] performing CRUD(Create, Read, Update, Delete) operations

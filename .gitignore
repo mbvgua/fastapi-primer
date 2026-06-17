@@ -1,6 +1,7 @@
 # python stuff
 .venv/
 __pycache__
+webapp/__pycache__/
 
 # extras
 tutorial/
