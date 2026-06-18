@@ -7,11 +7,11 @@ SQLALCHEMY_DATABASE_URL = "sqlite:///./blog.db"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     # sqlite is single threaded. fastAPI can handle requests asynchronously
-    # this disables that hinderance from sqlite
+    # this enables this feature for better performance
     connect_args={"check_same_thread": False},
 )
 
-# create transcations pools withe the db
+# create transcations pools with the db
 session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

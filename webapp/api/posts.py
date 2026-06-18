@@ -1,16 +1,20 @@
 """
 these endpoints return data in JSON format. basic data aimed at giving general
-overview of what the application does. also these endpoints are what is
-included in the OpenApi documentation in:
+overview of what the application does.
+
+also these endpoints are what is included in the OpenApi documentation in:
     - https:127.0.0.1:8000/docs
     - https:127.0.0.1:8000/redoc
 
-URL's include:
-    * POST:
+endpoints included here are:
+    * CREATE:
         - /api/posts
-    * GET:
-        - /api/posts
-        - /api/posts/{post_id}
+    * READ(GET):
+        - /
+        - /posts
+        - /posts/{post_id}
+    * UPDATE:
+    * DELETE:
 """
 
 from typing import Annotated
@@ -30,20 +34,20 @@ router = APIRouter(prefix="/api/posts")
 @router.post("/", response_model=PostResponse, status_code=HTTP_201_CREATED)
 def create_post(post: PostCreate, db: Annotated[Session, Depends(get_db)]):
     """
-    endpoint for creating posts in JSON format
+    documentation endopoint for creating posts
     """
     # verify user first exists
-    result = db.execute(select(models.User).where(models.User.id == post.user_id))
-    existing_user = result.scalars().first()
+    data = db.execute(select(models.User).where(models.User.id == post.user_id))
+    existing_user = data.scalars().first()
 
+    # fail first, fail visibly, keep success clean
     if not existing_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User does not exist, try again?",
+            detail=f"User of id:{post.user_id} does not exist, try again?",
         )
 
     new_post = models.Post(title=post.title, content=post.content, user_id=post.user_id)
-
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -52,25 +56,30 @@ def create_post(post: PostCreate, db: Annotated[Session, Depends(get_db)]):
 
 
 @router.get("/", response_model=list[PostResponse])
-def get_posts_api(db: Annotated[Session, Depends(get_db)]):
+def get_posts(db: Annotated[Session, Depends(get_db)]):
     """
-    API endpoint to return all posts within the application in JSON format
+    documentation endpoint that returns all posts in application
     """
-    result = db.execute(select(models.Post))
-    posts = result.scalars().all()
+    data = db.execute(select(models.Post))
+    posts = data.scalars().all()
+
     return posts
 
 
 @router.get("/{post_id}")
-def get_post_api(post_id: int, db: Annotated[Session, Depends(get_db)]):
+def get_post_by_id(post_id: int, db: Annotated[Session, Depends(get_db)]):
     """
-    return specific post by narrowing down with its ID
+    documentation endpoint that returns a specific post by selecting by its
+    post_id
     """
-    error_message = "Oops! Looks like the post does not exist. Try again?"
-    result = db.execute(select(models.Post).where(models.Post.id == post_id))
-    post = result.scalars().first()
+    data = db.execute(select(models.Post).where(models.Post.id == post_id))
+    post = data.scalars().first()
 
+    # fail first, fail visibly, keep success clean
     if not post:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=error_message)
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail="Oops! Looks like the post does not exist. Try again?",
+        )
 
     return post

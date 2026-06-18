@@ -14,11 +14,10 @@ these schemas are enforced by fastapi and generated automaticaly in the docs
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 
-# validation schemas for Users
 class UserBase(BaseModel):
     """
-    schema for datafields to be shared between the UserCreate & UserResponse
-    schemas
+    the main base schema. this contains data fields that are shared between
+    the UserCreate and UserResponse schemas.
     """
 
     username: str = Field(min_length=1, max_length=50)
@@ -27,7 +26,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """
-    inherits from UserBase above
+    inherits from UserBase schema
     """
 
     pass
@@ -35,9 +34,10 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     """
-    inherits from UserBase
-
-    adds 'id', 'image_file' & 'image_path'
+    inherits from UserBase. adds the following fields:
+    - id
+    - image_file
+    - image_path    -> auto-generated if 'image_file' is None
     """
 
     # allows pydantic to read from SqlAlchemy models and properties

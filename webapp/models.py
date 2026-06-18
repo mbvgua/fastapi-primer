@@ -8,8 +8,6 @@ Python to perform forward-referencing of Posts table from the Users table, i.e
 referencing a table before it is created. this is now default in Python >=3.14.
 
 this is similar to sth called hoisting in javascript ecosystem
-
-TODO: make plain'ol tables with SQL. see if it works!
 """
 
 from datetime import UTC, datetime
@@ -22,13 +20,23 @@ from webapp.database import Base
 
 class User(Base):
     """
-    this is the default user table. it inherits from the 'Base'model in database.py
+    creates the 'users' table. It inherits from the 'Base' class found in the
+    database.py file.
 
-    Mapped: allows for type hints in our IDE
+    the table contains the following columns:
+        * id:str    -> primary_key
+        * username:str
+        * email:str
+        * image_file:str|None
+        * image_path:str|None
+        * posts:list[Post]
 
-    using 'relationship' for the 'posts' column created a one-to-many relationship
-    where one user can have multiple posts
-    'back_populates' links to the 'author' column in Posts
+    NOTE:
+    - using 'Mapped' in the column definitons allows for type hints in our IDE
+    - using 'relationship' for the 'posts' column created a one-to-many relationship
+      where one user can have multiple posts
+    - 'back_populates' links to the 'author' column in Posts, allowing one to
+      perform operations like 'user.posts.[id, title, content, date_posted]
     """
 
     # define table name. good practise to be in plural
@@ -65,7 +73,23 @@ class User(Base):
 
 class Post(Base):
     """
-    creates the posts table
+    creates the 'posts' table. It inherits from the 'Base' class found in the
+    database.py file.
+
+    the table contains the following columns:
+        * id:str    -> primary_key
+        * title:str
+        * content:str
+        * user_id:int   -> foreign_key
+        * date_posted:datetime
+        * author:User
+
+    NOTE:
+    - using 'Mapped' in the column definitons allows for type hints in our IDE
+    - using 'relationship' for the 'author' column created a one-to-many relationship
+      where one user can have multiple posts
+    - 'back_populates' links to the 'posts' column in Users, allowing one to
+      perform operations like 'post.author.[username, email, id, image_file]'
     """
 
     __tablename__ = "posts"
