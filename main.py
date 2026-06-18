@@ -22,6 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     - https:127.0.0.1:8000/redoc
 """
 
-from webapp import create_app
+from webapp.main import create_app
 
 app = create_app()

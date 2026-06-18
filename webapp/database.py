@@ -22,8 +22,8 @@ class Base(DeclarativeBase):
 def get_db():
     """
     provide sessions to our routes. fastAPI will reference this
-    function(through dependency injection) for each request, and it will
-    handle cleanup automatically
+    function(through dependency injection) for each request, ensuring that it
+    each request has its own session, in which cleanup happens automatically
     """
     with session_local() as db:
         yield db
