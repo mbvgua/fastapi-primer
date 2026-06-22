@@ -24,7 +24,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, selectinload
 
 from webapp.database import models
 from webapp.database.config import get_db
@@ -35,7 +36,7 @@ router = APIRouter(prefix="/api/users")
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
+async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endpoint for creating new users into the program
 
@@ -44,7 +45,7 @@ def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
     results as the db parameter.
     """
     # check to see if user already exists
-    data = db.execute(
+    data = await db.execute(
         select(models.User).where(
             models.User.username == user.username or models.User.email == user.email
         )
@@ -62,14 +63,14 @@ def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
     # if not add user to the db
     new_user = models.User(username=user.username, email=user.email)
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
 
     return new_user
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
+async def get_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endpoint for getting a user from the program
 
@@ -77,7 +78,7 @@ def get_user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
     dependecy injection, creates the databse connection, and returns those
     results as the db parameter.
     """
-    data = db.execute(select(models.User).where(models.User.id == user_id))
+    data = await db.execute(select(models.User).where(models.User.id == user_id))
 
     # NOTE: try getting only the .scalar() value and see the difference
     existing_user = data.scalars().first()
@@ -93,12 +94,14 @@ def get_user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
 
 
 @router.get("/{user_id}/posts", response_model=list[PostResponse])
-def get_user_posts_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
+async def get_user_posts_by_id(
+    user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
+):
     """
     documentation endpoint to get all posts uploaded by a given user
     """
 
-    data = db.execute(select(models.User).where(models.User.id == user_id))
+    data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
     if not existing_user:
@@ -107,21 +110,23 @@ def get_user_posts_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
             detail="Oops! Looks like the user does not exist, try again?",
         )
 
-    data = db.execute(
-        select(models.Post).where(models.Post.user_id == existing_user.id)
+    data = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.user_id == existing_user.id)
     )
     posts = data.scalars().all()
     return posts
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
-def update_user(
-    user_id: int, updated_user: UserUpdate, db: Annotated[Session, Depends(get_db)]
+async def update_user(
+    user_id: int, updated_user: UserUpdate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     documentation endpoint that updates a users values
     """
-    data = db.execute(select(models.User).where(models.User.id == user_id))
+    data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
     # if users does not exist, fail cleanly
@@ -139,7 +144,7 @@ def update_user(
         and updated_user.email is not None
         and updated_user.email != existing_user.email
     ):
-        data = db.execute(
+        data = await db.execute(
             select(models.User).where(
                 models.User.username == updated_user.username
                 or models.User.email == updated_user.email
@@ -161,20 +166,20 @@ def update_user(
     for field, value in updated_data.items():
         setattr(existing_user, field, value)
 
-    db.commit()
-    db.refresh(existing_user)
+    await db.commit()
+    await db.refresh(existing_user)
     return existing_user
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
+async def delete_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endpoint to deletea user from the application using their id
 
     does not return anything, but if successful, the response status code is
     204, which means content has successfully been deleted
     """
-    data = db.execute(select(models.User).where(models.User.id == user_id))
+    data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
     if not existing_user:
@@ -183,5 +188,5 @@ def delete_user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
             detail="Oh no! Looks like the user does not exist. Try again?",
         )
 
-    db.delete(existing_user)
-    db.commit()
+    await db.delete(existing_user)
+    await db.commit()

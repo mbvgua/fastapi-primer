@@ -13,7 +13,8 @@ endpoints included here are:
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from starlette.status import HTTP_404_NOT_FOUND
 
@@ -25,16 +26,21 @@ router = APIRouter(prefix="/users")
 
 
 @router.get("/{user_id}/posts", include_in_schema=False)
-def get_user_posts_by_id(
-    request: Request, user_id: int, db: Annotated[Session, Depends(get_db)]
+async def get_user_posts_by_id(
+    request: Request, user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     returns all posts uploaded by a given user, based on the 'user_id' passed
     in as a parameter. if no posts were uploaded by the given user, appropriate
     error message is returned
+
+    NOTE:
+    - the first query does not need a 'selectinload' method since we are not
+      accessing any relationships from the 'Users' table. the second query does
+      however need it
     """
 
-    data = db.execute(select(models.User).where(models.User.id == user_id))
+    data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
     # fail first, fail loudly, keep success clean
@@ -44,7 +50,11 @@ def get_user_posts_by_id(
             detail="Looks like the user does not exist. Try again?",
         )
 
-    data = db.execute(select(models.Post).where(models.Post.user_id == user_id))
+    data = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.user_id == user_id)
+    )
     posts = data.scalars().all()
 
     return templates.TemplateResponse(

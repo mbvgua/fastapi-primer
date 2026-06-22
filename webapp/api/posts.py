@@ -23,7 +23,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, selectinload
 
 from webapp.database import models
 from webapp.database.config import get_db
@@ -33,12 +34,17 @@ router = APIRouter(prefix="/api/posts")
 
 
 @router.post("/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
-def create_post(post: PostCreate, db: Annotated[Session, Depends(get_db)]):
+async def create_post(post: PostCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endopoint for creating posts
+
+    NOTE:
+    - 'attribute_names' in the db.commit() refreshes the post alongside the
+      table from the relationship passed in, thus ensuring that table values
+      and their relationship values are up-to-date
     """
     # verify user first exists
-    data = db.execute(select(models.User).where(models.User.id == post.user_id))
+    data = await db.execute(select(models.User).where(models.User.id == post.user_id))
     existing_user = data.scalars().first()
 
     # fail first, fail visibly, keep success clean
@@ -50,30 +56,36 @@ def create_post(post: PostCreate, db: Annotated[Session, Depends(get_db)]):
 
     new_post = models.Post(title=post.title, content=post.content, user_id=post.user_id)
     db.add(new_post)
-    db.commit()
-    db.refresh(new_post)
+    await db.commit()
+    await db.refresh(new_post, attribute_names=["author"])
 
     return new_post
 
 
 @router.get("/", response_model=list[PostResponse])
-def get_posts(db: Annotated[Session, Depends(get_db)]):
+async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endpoint that returns all posts in application
     """
-    data = db.execute(select(models.Post))
+    data = await db.execute(
+        select(models.Post).options(selectinload(models.Post.author))
+    )
     posts = data.scalars().all()
 
     return posts
 
 
 @router.get("/{post_id}")
-def get_post_by_id(post_id: int, db: Annotated[Session, Depends(get_db)]):
+async def get_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endpoint that returns a specific post by selecting by its
     post_id
     """
-    data = db.execute(select(models.Post).where(models.Post.id == post_id))
+    data = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.id == post_id)
+    )
     post = data.scalars().first()
 
     # fail first, fail visibly, keep success clean
@@ -87,15 +99,24 @@ def get_post_by_id(post_id: int, db: Annotated[Session, Depends(get_db)]):
 
 
 @router.put("/{post_id}", response_model=PostResponse)
-def update_post_full(
-    post_id: int, updated_post: PostCreate, db: Annotated[Session, Depends(get_db)]
+async def update_post_full(
+    post_id: int, updated_post: PostCreate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     documentation endpoint for updating an entire post using *PUT*
     all fields are required for this update
+
+    NOTE:
+    - 'attribute_names' in the db.commit() refreshes the post alongside the
+      table from the relationship passed in, thus ensuring that table values
+      and their relationship values are up-to-date
     """
 
-    data = db.execute(select(models.Post).where(models.Post.id == post_id))
+    data = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.id == post_id)
+    )
     post = data.scalars().first()
 
     # ensure post exists
@@ -107,7 +128,7 @@ def update_post_full(
 
     # ensure user id matches
     if post.user_id != updated_post.user_id:
-        data = db.execute(
+        data = await db.execute(
             select(models.User).where(models.User.id == updated_post.user_id)
         )
         existing_user = data.scalars().first()
@@ -122,21 +143,30 @@ def update_post_full(
     post.content = updated_post.content
     post.user_id = updated_post.user_id
 
-    db.commit()
-    db.refresh(post)
+    await db.commit()
+    await db.refresh(post, attribute_names=["author"])
     return post
 
 
 @router.patch("/{post_id}", response_model=PostResponse)
-def update_post_partial(
-    post_id: int, updated_post: PostUpdate, db: Annotated[Session, Depends(get_db)]
+async def update_post_partial(
+    post_id: int, updated_post: PostUpdate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     documentation endpoint for updating a post partially using *PATCH*
     all fields are optional for this update
+
+    NOTE:
+    - 'attribute_names' in the db.commit() refreshes the post alongside the
+      table from the relationship passed in, thus ensuring that table values
+      and their relationship values are up-to-date
     """
 
-    data = db.execute(select(models.Post).where(models.Post.id == post_id))
+    data = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.id == post_id)
+    )
     post = data.scalars().first()
 
     # ensure post exists
@@ -154,13 +184,13 @@ def update_post_partial(
     for field, value in updated_data.items():
         setattr(post, field, value)
 
-    db.commit()
-    db.refresh(post)
+    await db.commit()
+    await db.refresh(post, attribute_names=["author"])
     return post
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post_by_id(post_id: int, db: Annotated[Session, Depends(get_db)]):
+async def delete_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     documentation endpoint that deletes a post in the application based on the
     'post_id' passed in
@@ -168,7 +198,7 @@ def delete_post_by_id(post_id: int, db: Annotated[Session, Depends(get_db)]):
     does not return anything, but if successful, the response status code is
     204, which means content has successfully been deleted
     """
-    data = db.execute(select(models.Post).where(models.Post.id == post_id))
+    data = await db.execute(select(models.Post).where(models.Post.id == post_id))
     existing_post = data.scalars().first()
 
     if not existing_post:
@@ -177,5 +207,5 @@ def delete_post_by_id(post_id: int, db: Annotated[Session, Depends(get_db)]):
             detail="Oops! Post not found, try again?",
         )
 
-    db.delete(existing_post)
-    db.commit()
+    await db.delete(existing_post)
+    await db.commit()

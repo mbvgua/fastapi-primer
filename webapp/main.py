@@ -1,7 +1,11 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
 
 from webapp.database.config import Base, engine
 
@@ -17,19 +21,40 @@ def create_app():
     instance when called.
     """
 
-    app = FastAPI()
-    # load css & html
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-
-    # mount media directory
-    app.mount("/media", StaticFiles(directory="media"), name="media")
-
     # create our database by looking at our models and creating them, if they
     # do not exist. also, this method is idempotent hence safe to run
     # multiple times as it cleans up automatically
     from webapp.database import models
 
-    Base.metadata.create_all(bind=engine)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """
+        lifespan are modern methods in FastAPI to handle the startup and
+        shutdown of events. they replace deprecated 'on_startup'/'on_shutdown'
+        that were common in Flask applications.
+
+        previously, the db was created with:
+            $ Base.metadata.create_all(bind=engine)
+
+        'create_all' was synchronous, hence unable to be called alongside
+        asynchronous methods. lifespans allow for this
+        """
+        # startup
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        yield
+
+        # shutdown
+        await engine.dispose()
+
+    app = FastAPI(lifespan=lifespan)
+
+    # load css & html
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+    # mount media directory
+    app.mount("/media", StaticFiles(directory="media"), name="media")
 
     # import & register the routes
     from webapp.routes.home import router as home_router
@@ -49,66 +74,62 @@ def create_app():
     from starlette.exceptions import HTTPException as StarletteHTTPException
 
     @app.exception_handler(StarletteHTTPException)
-    def general_http_exception_handler(
+    async def general_http_exception_handler(
         request: Request, exception: StarletteHTTPException
     ):
         """
-        handle exception handlers. this catches any StarletteHTTPException's
-        raised via code execution.
+        handle exception errors asynchronously.
+        this catches any StarletteHTTPException's raised via code execution.
 
         fastapi is built on top of starlette, hence why its execptions are also imported
         alongside those of fastapi, lest some will be missed.
         """
+        # if url starts with "/api/..."
+        if request.url.path.startswith("/api"):
+            return await http_exception_handler(request, exception)
+
         message = (
-            exception.detail if exception.detail else "An error occurred, try again?"
+            exception.detail
+            if exception.detail
+            else "An error occurred. Please check your request and try again?"
         )
 
-        # if url starts with "/api/..." return JSON response
-        if request.url.path.startswith("/api"):
-            return JSONResponse(
-                status_code=exception.status_code, content={"detail": message}
-            )
-        # else return 'error.html' template
-        else:
-            return templates.TemplateResponse(
-                request,
-                "error.html",
-                {
-                    "status_code": exception.status_code,
-                    "title": exception.status_code,
-                    "message": message,
-                },
-                status_code=exception.status_code,
-            )
+        return templates.TemplateResponse(
+            request,
+            "error.html",
+            {
+                "status_code": exception.status_code,
+                "title": exception.status_code,
+                "message": message,
+            },
+            status_code=exception.status_code,
+        )
 
     # Validation Error Handling
     @app.exception_handler(RequestValidationError)
-    def validation_exception_handler(
+    async def validation_exception_handler(
         request: Request, exception: RequestValidationError
     ):
         """
-        handle validation errors
+        handle validation errors asynchronously
         """
-        message = "An error occurred, try again?"
 
         # if url starts with "/api/..." return JSON response
         if request.url.path.startswith("/api"):
-            return JSONResponse(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                content={"detail": exception.errors()},
-            )
-        # else return 'error.html' template
-        else:
-            return templates.TemplateResponse(
-                request,
-                "error.html",
-                {
-                    "status_code": status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    "title": status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    "message": message,
-                },
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            )
+            return await request_validation_exception_handler(request, exception)
+
+        message = ""
+
+        return templates.TemplateResponse(
+            request,
+            "error.html",
+            {
+                "status_code": status.HTTP_422_UNPROCESSABLE_CONTENT,
+                "title": status.HTTP_422_UNPROCESSABLE_CONTENT,
+                "message": "Invalid request, please check your input and try again.",
+            },
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        )
 
     return app
 
