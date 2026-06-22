@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 
-from webapp.database import Base, engine
+from webapp.database.config import Base, engine
 
 templates: Jinja2Templates = Jinja2Templates(directory="templates")
 
@@ -27,7 +27,7 @@ def create_app():
     # create our database by looking at our models and creating them, if they
     # do not exist. also, this method is idempotent hence safe to run
     # multiple times as it cleans up automatically
-    from webapp import models
+    from webapp.database import models
 
     Base.metadata.create_all(bind=engine)
 

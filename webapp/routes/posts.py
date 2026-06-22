@@ -17,8 +17,8 @@ from fastapi import Depends, Request, status, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from webapp import models
-from webapp.database import get_db
+from webapp.database import models
+from webapp.database.config import get_db
 from webapp.main import templates
 
 router = APIRouter(prefix="/posts")

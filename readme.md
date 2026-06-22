@@ -10,7 +10,7 @@ Core technologies learnt:
 - [x] validation and error handling
 - [x] pydantic schemas & models for data validation
 - [x] using SQLAlchemy ORM
-- [ ] performing CRUD(Create, Read, Update, Delete) operations
+- [x] performing CRUD(Create, Read, Update, Delete) operations
 - [ ] making your app asynchronous
 - [ ] routers with APIRouter
 - [ ] forms

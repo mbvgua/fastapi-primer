@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from webapp.database import Base
+from webapp.database.config import Base
 
 
 class User(Base):
@@ -51,7 +51,14 @@ class User(Base):
 
     # NOTE: we reference the 'Post' table before its created.
     # this is called forward-referencing
-    posts: Mapped[list[Post]] = relationship(back_populates="author")
+    posts: Mapped[list[Post]] = relationship(
+        back_populates="author",
+        # NOTE: deletes user alongside all of their posts. FastAPI does
+        # this by default, so this is just a precaution for older versions.
+        # Also, change it from cascade into making all deleted posts belong to
+        # a "ghost" user, like github, reddit e.t.c
+        cascade="all, delete-orphan",
+    )
 
     @property
     def image_path(self) -> str:

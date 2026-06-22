@@ -24,7 +24,7 @@ class PostBase(BaseModel):
     the PostCreate and PostResponse schemas.
     """
 
-    title: str = Field(min_length=5, max_length=50)
+    title: str = Field(min_length=5, max_length=100)
     content: str = Field(min_length=10)
 
 
@@ -52,3 +52,19 @@ class PostResponse(PostBase):
     user_id: int
     date_posted: datetime
     author: UserResponse
+
+
+class PostUpdate(BaseModel):
+    """
+    inherits from the BaseModel, since its an update, it makes all fields
+    optional. If it were to inherit from the PostBase schema, it would mean
+    overwriting them, which causes errors.
+
+    NOTE:
+    - since the inputs are optional, they have to have a 'default' value
+    - we do not include the 'id' value for update as that would change
+      ownership of the posts
+    """
+
+    title: str | None = Field(default=None, min_length=5, max_length=50)
+    content: str | None = Field(default=None, min_length=10)

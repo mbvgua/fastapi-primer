@@ -46,3 +46,20 @@ class UserResponse(UserBase):
     id: int
     image_file: str | None
     image_path: str
+
+
+class UserUpdate(BaseModel):
+    """
+    inherits from the BaseModel, since its an update, it makes all fields
+    optional. If it were to inherit from the UserBase schema, it would mean
+    overwriting them, which causes errors.
+
+    NOTE:
+    - since the inputs are optional, they have to have a 'default' value
+    - we do not include the 'id' value for update as that would change
+      ownership of the posts
+    """
+
+    username: str | None = Field(default=None, min_length=1, max_length=50)
+    email: EmailStr | None = Field(default=None, max_length=100)
+    image_file: str | None = Field(default=None, min_length=1)
