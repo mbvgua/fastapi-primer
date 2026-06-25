@@ -48,7 +48,18 @@ def create_app():
         # shutdown
         await engine.dispose()
 
-    app = FastAPI(lifespan=lifespan)
+    app = FastAPI(
+        title="fastapi-primer",
+        description="simple app for recording user posts",
+        version="0.0.1",
+        lifespan=lifespan,
+        license_info={
+            "name": "GPLv3",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.en.html",
+        },
+        # enable this once the project goes live, to disable the api docs
+        # openapi_url=None,
+    )
 
     # load css & html
     app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -60,8 +71,8 @@ def create_app():
     from webapp.routes.home import router as home_router
     from webapp.routes.posts import router as posts_router
     from webapp.routes.users import router as users_router
-    from webapp.api.users import router as users_api_router
-    from webapp.api.posts import router as posts_api_router
+    from webapp.routes.api.users import router as users_api_router
+    from webapp.routes.api.posts import router as posts_api_router
 
     app.include_router(home_router)
     app.include_router(users_router)
@@ -117,8 +128,6 @@ def create_app():
         # if url starts with "/api/..." return JSON response
         if request.url.path.startswith("/api"):
             return await request_validation_exception_handler(request, exception)
-
-        message = ""
 
         return templates.TemplateResponse(
             request,

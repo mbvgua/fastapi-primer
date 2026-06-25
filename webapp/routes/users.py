@@ -1,6 +1,8 @@
 """
-contains routes for the /users endpoints. these are not included in the
-documentation docs, since they return formatted output(boilerplate html & css)
+contains routes for the "/users" endpoints.
+
+these routes will not be included in the documentation docs, as since they
+return formatted output in html & css.
 
 endpoints included here are:
     * CREATE:
@@ -12,7 +14,7 @@ endpoints included here are:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
@@ -22,7 +24,7 @@ from webapp.database.config import get_db
 from webapp.database import models
 from webapp.main import templates
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users views"])
 
 
 @router.get("/{user_id}/posts", include_in_schema=False)
@@ -30,14 +32,20 @@ async def get_user_posts_by_id(
     request: Request, user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    returns all posts uploaded by a given user, based on the 'user_id' passed
-    in as a parameter. if no posts were uploaded by the given user, appropriate
+    returns all posts uploaded by a given user.
+
+    filters these based on the 'user_id' passed in as a parameter in the url
+    request. if no posts were uploaded by the given user, appropriate
     error message is returned
 
     NOTE:
     - the first query does not need a 'selectinload' method since we are not
       accessing any relationships from the 'Users' table. the second query does
       however need it
+    - "selectinload()": allows for eargely loading in the async sqlite session,
+      hence the request is able to access "models.Post.author", lest it would
+      return and error
+    - "order_by()": allows ordering by most recent post
     """
 
     data = await db.execute(select(models.User).where(models.User.id == user_id))
@@ -46,7 +54,7 @@ async def get_user_posts_by_id(
     # fail first, fail loudly, keep success clean
     if not existing_user:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Looks like the user does not exist. Try again?",
         )
 
@@ -54,6 +62,7 @@ async def get_user_posts_by_id(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.user_id == user_id)
+        .order_by(models.Post.date_posted.desc())
     )
     posts = data.scalars().all()
 

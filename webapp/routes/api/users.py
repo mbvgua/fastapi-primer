@@ -1,23 +1,20 @@
 """
-these endpoints return data in JSON format. basic data aimed at giving general
-overview of what the application does.
+contain routes for the "/api/users" endpoints. they return data in JSON format
 
-also these endpoints are what is included in the OpenApi documentation in:
+also these endpoints are what is included in the OpenAPI documentation in:
     - https:127.0.0.1:8000/docs
     - https:127.0.0.1:8000/redoc
 
 endpoints included here are:
     * CREATE:
-        - /api/users
+        - /api/users: create_user
     * READ(GET):
-        - /api/users
-        - /api/users/{user_id}
-        - /api/users/{user_id}/posts
-    * UPDATE:
-        - PUT:
-        - PATCH: /api/users/{user_id}
+        - /api/users/{user_id}: get_user_by_id
+        - /api/users/{user_id}/posts: get_user_posts_by_id
+    * UPDATE(PATCH):
+        - /api/users/{user_id}: update_user
     * DELETE:
-        - /api/users/{user_id}
+        - /api/users/{user_id}: delete_user_by_id
 """
 
 from typing import Annotated
@@ -25,23 +22,23 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
 
 from webapp.database import models
 from webapp.database.config import get_db
 from webapp.schemas.users import UserCreate, UserResponse, UserUpdate
 from webapp.schemas.posts import PostResponse
 
-router = APIRouter(prefix="/api/users")
+router = APIRouter(prefix="/api/users", tags=["users"])
 
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    documentation endpoint for creating new users into the program
+    endpoint for creating new users into the program
 
-    it uses the UserCreate schema for validation all inputs, the through
-    dependecy injection, creates the databse connection, and returns those
+    it uses the "UserCreate" schema for validation all inputs, through
+    dependecy injection, creates the database connection, and returns those
     results as the db parameter.
     """
     # check to see if user already exists
@@ -72,15 +69,13 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    documentation endpoint for getting a user from the program
+    endpoint for getting a user filtering by their "user_id"
 
-    it uses the UserResponse schema for validation all inputs, the through
-    dependecy injection, creates the databse connection, and returns those
+    it uses the "UserResponse" schema for validation all inputs, the through
+    dependecy injection, creates the database connection, and returns those
     results as the db parameter.
     """
     data = await db.execute(select(models.User).where(models.User.id == user_id))
-
-    # NOTE: try getting only the .scalar() value and see the difference
     existing_user = data.scalars().first()
 
     # fail first, fail cleanly
@@ -98,7 +93,11 @@ async def get_user_posts_by_id(
     user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    documentation endpoint to get all posts uploaded by a given user
+    endpoint to get all posts uploaded by a given user, filtering by the
+    "user_id"
+
+    NOTE:
+    - "order_by()": orders the posts, ensuring the most recent appear first
     """
 
     data = await db.execute(select(models.User).where(models.User.id == user_id))
@@ -114,6 +113,7 @@ async def get_user_posts_by_id(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.user_id == existing_user.id)
+        .order_by(models.Post.date_posted.desc())
     )
     posts = data.scalars().all()
     return posts
@@ -124,7 +124,8 @@ async def update_user(
     user_id: int, updated_user: UserUpdate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    documentation endpoint that updates a users values
+    endpoint that updates a users information, baased on the "user_id" passed
+    in as a parameter.
     """
     data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
@@ -174,7 +175,7 @@ async def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    documentation endpoint to deletea user from the application using their id
+    endpoint to delete user from the application using their "user_id"
 
     does not return anything, but if successful, the response status code is
     204, which means content has successfully been deleted
