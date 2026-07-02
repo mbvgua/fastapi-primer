@@ -18,9 +18,8 @@ NOTE:
 
 """
 
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 
 # tell slqlite where to connect
 # +aiosqlite tells to which asynchronous driver
@@ -29,7 +28,6 @@ SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./blog.db"
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     # sqlite is single threaded. fastAPI can handle requests asynchronously
-    # this enables this feature for better performance
     connect_args={"check_same_thread": False},
 )
 

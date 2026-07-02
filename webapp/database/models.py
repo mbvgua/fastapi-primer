@@ -2,8 +2,8 @@
 this file defines our database tables using SQLAlchemy ORM(Object Relational
 Mapping)
 
-if you're on an older Python version, lower than 3.14, you'd need to place
-` from __future__ import annotations` at the top of your imports to allow
+if you're on an older Python version, <3.14, you'd need to place
+`from __future__ import annotations` at the top of your imports to allow
 Python to perform forward-referencing of Posts table from the Users table, i.e
 referencing a table before it is created. this is now default in Python >=3.14.
 
@@ -27,6 +27,7 @@ class User(Base):
         * id:str    -> primary_key
         * username:str
         * email:str
+        * password_hash:str
         * image_file:str|None
         * image_path:str|None
         * posts:list[Post]
@@ -45,6 +46,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(300), nullable=False)
     image_file: Mapped[str | None] = mapped_column(
         String(200), nullable=True, default=None
     )

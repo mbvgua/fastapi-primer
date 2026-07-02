@@ -16,9 +16,8 @@ def create_app():
     """
     main entrypoint of the application, which uses the factory pattern
 
-    instead of creating an 'app' global variable at the top of the module, it
-    is wrapped in a 'create_app()' function, which builds and returns a fresh
-    instance when called.
+    the "app" is wrapped in a 'create_app()' function, which builds and
+    returns a fresh instance when called.
     """
 
     # create our database by looking at our models and creating them, if they
@@ -29,15 +28,14 @@ def create_app():
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """
-        lifespan are modern methods in FastAPI to handle the startup and
-        shutdown of events. they replace deprecated 'on_startup'/'on_shutdown'
+        lifespan is a modern method in FastAPI to handle the startup and
+        shutdown of events. they replace deprecated "on_startup"/"on_shutdown"
         that were common in Flask applications.
 
-        previously, the db was created with:
-            $ Base.metadata.create_all(bind=engine)
-
-        'create_all' was synchronous, hence unable to be called alongside
-        asynchronous methods. lifespans allow for this
+        previously, the db was created with
+        "Base.metadata.create_all(bind=engine)". "create_all()" was synchronous,
+        hence unable to be called alongside asynchronous methods.
+        lifespans allow for this
         """
         # startup
         async with engine.begin() as conn:
@@ -71,14 +69,18 @@ def create_app():
     from webapp.routes.home import router as home_router
     from webapp.routes.posts import router as posts_router
     from webapp.routes.users import router as users_router
+    from webapp.routes.auth import router as auth_router
     from webapp.routes.api.users import router as users_api_router
     from webapp.routes.api.posts import router as posts_api_router
+    from webapp.routes.api.auth import router as auth_api_router
 
     app.include_router(home_router)
     app.include_router(users_router)
     app.include_router(posts_router)
+    app.include_router(auth_router)
     app.include_router(users_api_router)
     app.include_router(posts_api_router)
+    app.include_router(auth_api_router)
 
     # error handling
     from fastapi.exceptions import RequestValidationError

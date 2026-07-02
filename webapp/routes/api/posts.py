@@ -35,10 +35,11 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(post: PostCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint for creating new posts
+    "/api/posts"
+    creates new posts in the application
 
     NOTE:
-    - 'attribute_names' in the db.commit() refreshes the post alongside the
+    - "attribute_names" in the db.commit() refreshes the post alongside the
       table from the relationship passed in, thus ensuring that table values
       and their relationship values are up-to-date
     """
@@ -50,7 +51,7 @@ async def create_post(post: PostCreate, db: Annotated[AsyncSession, Depends(get_
     if not existing_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User of id:{post.user_id} does not exist, try again?",
+            detail=f"User of id:{post.user_id} does not exist. Try again?",
         )
 
     new_post = models.Post(title=post.title, content=post.content, user_id=post.user_id)
@@ -64,7 +65,8 @@ async def create_post(post: PostCreate, db: Annotated[AsyncSession, Depends(get_
 @router.get("", response_model=list[PostResponse])
 async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint that returns all posts in database
+    "/api/posts"
+    returns all posts in database
 
     NOTE:
     - "selectinload()": allows for eargely loading in the async sqlite session,
@@ -86,7 +88,8 @@ async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
 @router.get("/{post_id}")
 async def get_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint returns a specific post by filtering based on it "post_id"
+    "/api/posts/{post_id}"
+    returns a specific post by filtering based on the "post_id" passed in.
 
     NOTE:
     - "selectinload()": allows for eargely loading in the async sqlite session,
@@ -115,8 +118,9 @@ async def update_post_full(
     post_id: int, updated_post: PostCreate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    endpoint for updating an entire post using PUT.
-    all fields are required for this update
+    "/api/posts/{post_id}"
+    updates an entire post using the "put" protocol. as such all fields are
+    required.
 
     NOTE:
     - "selectinload()": allows for eargely loading in the async sqlite session,
@@ -168,8 +172,9 @@ async def update_post_partial(
     post_id: int, updated_post: PostUpdate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    endpoint for updating a post partially using PATCH.
-    all fields are optional for this update
+    "/api/posts/{post_id}"
+    updates a post partially using the "patch" protocol. all fields are
+    optional for this update
 
     NOTE:
     - "selectinload()": allows for eargely loading in the async sqlite session,
@@ -196,9 +201,9 @@ async def update_post_partial(
 
     # overwrites only the data fields passed in by the user, and not update all
     # of them, as those maybe become what is set as default ->'None'
+    # .model_dump returns a dictionary
     updated_data = updated_post.model_dump(exclude_unset=True)
 
-    # .model_dump returns a dictionary
     for field, value in updated_data.items():
         setattr(post, field, value)
 
@@ -210,10 +215,12 @@ async def update_post_partial(
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint that deletes a post in the application based on the "post_id"
+    "/api/posts/{post_id}"
+    deletes a post in the application based on the "post_id" passed in.
 
-    does not return anything, but if successful, the response status code is
-    204, which means content has successfully been deleted
+    does not return any data, but if successful, the response status code is
+    204, which means the intended action has been successfully perfomred, which
+    in this case means that the post has been deleted.
     """
     data = await db.execute(select(models.Post).where(models.Post.id == post_id))
     existing_post = data.scalars().first()
@@ -221,7 +228,7 @@ async def delete_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(ge
     if not existing_post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Oops! Post not found, try again?",
+            detail="Oops! Post not found. Try again?",
         )
 
     await db.delete(existing_post)

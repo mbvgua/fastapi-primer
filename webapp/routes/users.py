@@ -1,7 +1,7 @@
 """
 contains routes for the "/users" endpoints.
 
-these routes will not be included in the documentation docs, as since they
+these routes will not be included in the documentation docs, since they
 return formatted output in html & css.
 
 endpoints included here are:
@@ -18,33 +18,33 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
-from starlette.status import HTTP_404_NOT_FOUND
 
 from webapp.database.config import get_db
 from webapp.database import models
 from webapp.main import templates
 
-router = APIRouter(prefix="/users", tags=["users views"])
+router = APIRouter(prefix="/users", tags=["users views"], include_in_schema=False)
 
 
-@router.get("/{user_id}/posts", include_in_schema=False)
+@router.get("/{user_id}/posts")
 async def get_user_posts_by_id(
     request: Request, user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
+    "/users/{user_id}/posts"
     returns all posts uploaded by a given user.
 
-    filters these based on the 'user_id' passed in as a parameter in the url
+    filters these based on the "user_id" passed in as a parameter in the url
     request. if no posts were uploaded by the given user, appropriate
     error message is returned
 
     NOTE:
-    - the first query does not need a 'selectinload' method since we are not
-      accessing any relationships from the 'Users' table. the second query does
-      however need it
     - "selectinload()": allows for eargely loading in the async sqlite session,
       hence the request is able to access "models.Post.author", lest it would
       return and error
+    - the first query does not need a "selectinload" method since we are not
+      accessing any relationships from the "Users" table. the second query does
+      however need it
     - "order_by()": allows ordering by most recent post
     """
 

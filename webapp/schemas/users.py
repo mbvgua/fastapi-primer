@@ -1,12 +1,13 @@
 """
-pydantic schemas help prevent exposing data that should not bee seen by all.
-it also helps validate schemas, preventing api access until all required fields
-are inputted.
+pydantic validation schemas which help define the shape of the data present in
+the application. it also helps validate schemas, preventing api access until
+all required fields are inputted.
 
 below are validation schemas for the users model. they include:
     - UserBase
     - UserCreate
-    - UserResponse
+    - UserPublicResponse
+    - UserPrivateResponse
 
 these schemas are enforced by fastapi and generated automaticaly in the docs
 """
@@ -29,23 +30,46 @@ class UserCreate(UserBase):
     inherits from UserBase schema
     """
 
-    pass
+    # FIXME: how do I ensure password is alphanumeric?
+    password: str = Field(min_length=8)
 
 
-class UserResponse(UserBase):
+class UserPublicResponse(BaseModel):
     """
-    inherits from UserBase. adds the following fields:
+    inherits from BaseModel. used for frontend facing scenarios, where security
+    of users data is not essential. to ensure this, the email and password are
+    not displayed here. adds the following fields:
     - id
+    - username
     - image_file
     - image_path    -> auto-generated if 'image_file' is None
     """
 
-    # allows pydantic to read from SqlAlchemy models and properties
-    model_config = ConfigDict(from_attributes=True)  # allow using dot-notation
+    # use pydantic to read from SqlAlchemy models and properties using
+    # dot-notation
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
+    username: str
     image_file: str | None
     image_path: str
+
+
+class UserPrivateResponse(UserPublicResponse):
+    """
+    inherits from UserPublicResponse. used for backend operations where user
+    data security is essential. e.g where a user needs to verify their own
+    data, say update their profile, hence emails and password can be passed.
+
+    adds the following fields:
+    - email:str
+    """
+
+    # use pydantic to read from SqlAlchemy models and properties using
+    # dot-notation
+    model_config = ConfigDict(from_attributes=True)
+
+    email: EmailStr
 
 
 class UserUpdate(BaseModel):
@@ -63,3 +87,15 @@ class UserUpdate(BaseModel):
     username: str | None = Field(default=None, min_length=1, max_length=50)
     email: EmailStr | None = Field(default=None, max_length=100)
     image_file: str | None = Field(default=None, min_length=1)
+
+
+class UserTokenResponse(BaseModel):
+    """
+    inherits from the BaseModel. used to define how the token will be shaped
+    like. it contains:
+    - access_token: str
+    - token_type: str
+    """
+
+    access_token: str
+    token_type: str

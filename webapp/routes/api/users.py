@@ -20,45 +20,63 @@ endpoints included here are:
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from webapp.database import models
 from webapp.database.config import get_db
-from webapp.schemas.users import UserCreate, UserResponse, UserUpdate
+from webapp.schemas.users import (
+    UserCreate,
+    UserPrivateResponse,
+    UserPublicResponse,
+    UserUpdate,
+)
 from webapp.schemas.posts import PostResponse
+from webapp.utils.passwords import PasswordUtils
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 
-@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=UserPrivateResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint for creating new users into the program
+    "/api/users"
+    creates new user in the application.
 
-    it uses the "UserCreate" schema for validation all inputs, through
-    dependecy injection, creates the database connection, and returns those
+    it uses the "UserCreate" schema for validation of all inputs. through
+    dependecy injection it creates the database connection, and returns those
     results as the db parameter.
+
+    NOTE:
+    - "func.lower()": makes the database value fetched to be in lowercase.
+      using this alongside the ".lower()" method for the string being compared
+      against allows for case-insensitive searching.
     """
-    # check to see if user already exists
+    # case-insensitive check to see if user already exists
     data = await db.execute(
         select(models.User).where(
-            models.User.username == user.username or models.User.email == user.email
+            func.lower(models.User.username) == user.username.lower()
+            or func.lower(models.User.email) == user.email.lower()
         )
     )
-    # check the first user object or None if no match
     existing_user = data.scalars().first()
 
     # checks if there is an existing user, and raises a HTTP exception
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username or email already exists, try again?",
+            detail="Username or email already exists. Try again?",
         )
 
     # if not add user to the db
-    new_user = models.User(username=user.username, email=user.email)
+    new_user = models.User(
+        username=user.username,
+        email=user.email.lower(),
+        password_hash=PasswordUtils.hash_password(user.password),
+    )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
@@ -66,12 +84,13 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
     return new_user
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=UserPublicResponse)
 async def get_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint for getting a user filtering by their "user_id"
+    "/api/users/{user_id}"
+    get a users data, based on the "user_id" passed in.
 
-    it uses the "UserResponse" schema for validation all inputs, the through
+    it uses the "UserPublicResponse" schema for validation all inputs, the through
     dependecy injection, creates the database connection, and returns those
     results as the db parameter.
     """
@@ -93,11 +112,15 @@ async def get_user_posts_by_id(
     user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    endpoint to get all posts uploaded by a given user, filtering by the
-    "user_id"
+    "/api/users/{user_id}/posts"
+    get all posts uploaded by a given user, filtering by the "user_id" passed
+    in.
 
     NOTE:
     - "order_by()": orders the posts, ensuring the most recent appear first
+    - "selectinload()": allows for eargely loading in the async sqlite session,
+      hence the request is able to access "models.Post.author", lest it would
+      return and error
     """
 
     data = await db.execute(select(models.User).where(models.User.id == user_id))
@@ -119,13 +142,14 @@ async def get_user_posts_by_id(
     return posts
 
 
-@router.patch("/{user_id}", response_model=UserResponse)
+@router.patch("/{user_id}", response_model=UserPrivateResponse)
 async def update_user(
     user_id: int, updated_user: UserUpdate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    endpoint that updates a users information, baased on the "user_id" passed
-    in as a parameter.
+    "/api/users/{user_id}"
+    updates a users information, based on the "user_id" passed in as a parameter
+    uses the "patch" protocol. all fields are optional for this update.
     """
     data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
@@ -134,7 +158,7 @@ async def update_user(
     if not existing_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Oh no! User not found, try again?",
+            detail="Oh no! User does not exist. Try again?",
         )
 
     # if user tried to update their email or username, ensure it does not exist
@@ -145,10 +169,11 @@ async def update_user(
         and updated_user.email is not None
         and updated_user.email != existing_user.email
     ):
+        # case-insensitive check to see if user already exists
         data = await db.execute(
             select(models.User).where(
-                models.User.username == updated_user.username
-                or models.User.email == updated_user.email
+                func.lower(models.User.username) == updated_user.username.lower()
+                or func.lower(models.User.email) == updated_user.email.lower()
             )
         )
         existing_username_or_email = data.scalars().first()
@@ -156,14 +181,14 @@ async def update_user(
         if existing_username_or_email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email or Username is taken! try again?",
+                detail="Email or Username is taken! Try again?",
             )
 
     # overwrites only the data fields passed in by the user, and not update all
-    # of them, as those maybe become what is set as default ->'None'
+    # of them, as those maybe become the default value('None')
+    # .model_dump returns a dictionary
     updated_data = updated_user.model_dump(exclude_unset=True)
 
-    # .model_dump returns a dictionary
     for field, value in updated_data.items():
         setattr(existing_user, field, value)
 
@@ -175,10 +200,12 @@ async def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
-    endpoint to delete user from the application using their "user_id"
+    "/api/users/{user_id}"
+    endpoint to delete user from the application using the "user_id" passed in.
 
-    does not return anything, but if successful, the response status code is
-    204, which means content has successfully been deleted
+    does not return any response data, but if successful, the response status code is
+    204, which means action has successfully been performed, which in this case
+    means user account has been deleted.
     """
     data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
