@@ -66,10 +66,10 @@ def create_app():
     app.mount("/media", StaticFiles(directory="media"), name="media")
 
     # import & register the routes
-    from webapp.routes.home import router as home_router
-    from webapp.routes.posts import router as posts_router
-    from webapp.routes.users import router as users_router
-    from webapp.routes.auth import router as auth_router
+    from webapp.routes.pages.home import router as home_router
+    from webapp.routes.pages.posts import router as posts_router
+    from webapp.routes.pages.users import router as users_router
+    from webapp.routes.pages.auth import router as auth_router
     from webapp.routes.api.users import router as users_api_router
     from webapp.routes.api.posts import router as posts_api_router
     from webapp.routes.api.auth import router as auth_api_router
