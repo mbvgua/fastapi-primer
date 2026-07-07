@@ -30,12 +30,11 @@ class PostBase(BaseModel):
 
 class PostCreate(PostBase):
     """
-    inherits from PostBase schema. add a 'user_id' field which is essenetial
-    for anyone creating a new post. helps ensure they are in they are already
-    in the system
+    inherits from PostBase schema. the user_id will now be determined from the
+    user token passed in, hence one cannot claim to be someone they're not
     """
 
-    user_id: int  # HACK: before adding auth
+    pass
 
 
 class PostResponse(PostBase):

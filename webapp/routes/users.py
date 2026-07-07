@@ -75,3 +75,12 @@ async def get_user_posts_by_id(
             "title": f"{existing_user.username.title()}'s Posts",
         },
     )
+
+
+@router.get("/account")
+async def account_page(request: Request):
+    """
+    less goo
+    """
+    title: str = "Account"
+    return templates.TemplateResponse(request, "account.html", {"title": title})

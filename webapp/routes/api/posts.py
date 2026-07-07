@@ -28,33 +28,32 @@ from sqlalchemy.orm import selectinload
 from webapp.database import models
 from webapp.database.config import get_db
 from webapp.schemas.posts import PostCreate, PostResponse, PostUpdate
+from webapp.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
-async def create_post(post: PostCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def create_post(
+    post: PostCreate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """
     "/api/posts"
     creates new posts in the application
 
     NOTE:
+    - "current_user" is a dependecy for authorization, it protects this route,
+      ensuring only authenticated users can access it, else they get a 401
+      Unauthorized error. As such, no need to verify user exists first.
     - "attribute_names" in the db.commit() refreshes the post alongside the
       table from the relationship passed in, thus ensuring that table values
       and their relationship values are up-to-date
     """
-    # verify user first exists
-    data = await db.execute(select(models.User).where(models.User.id == post.user_id))
-    existing_user = data.scalars().first()
-
-    # fail first, fail visibly, keep success clean
-    if not existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User of id:{post.user_id} does not exist. Try again?",
-        )
-
-    new_post = models.Post(title=post.title, content=post.content, user_id=post.user_id)
+    new_post = models.Post(
+        title=post.title, content=post.content, user_id=current_user.id
+    )
     db.add(new_post)
     await db.commit()
     await db.refresh(new_post, attribute_names=["author"])
@@ -115,7 +114,10 @@ async def get_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(get_d
 
 @router.put("/{post_id}", response_model=PostResponse)
 async def update_post_full(
-    post_id: int, updated_post: PostCreate, db: Annotated[AsyncSession, Depends(get_db)]
+    post_id: int,
+    updated_post: PostCreate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     "/api/posts/{post_id}"
@@ -123,6 +125,9 @@ async def update_post_full(
     required.
 
     NOTE:
+    - "current_user" is a dependecy for authorization, it protects this route,
+      ensuring only authenticated users can access it, else they get a 401
+      Unauthorized error. As such, no need to verify user exists first.
     - "selectinload()": allows for eargely loading in the async sqlite session,
       hence the request is able to access "models.Post.author", lest it would
       return and error
@@ -145,22 +150,15 @@ async def update_post_full(
             detail="Oops! Looks like the post does not exist. Try again?",
         )
 
-    # ensure user id matches
-    if post.user_id != updated_post.user_id:
-        data = await db.execute(
-            select(models.User).where(models.User.id == updated_post.user_id)
+    # user_id's lazima zimatch pia
+    if post.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Oops! Looks like you are not authorized to update this post.",
         )
-        existing_user = data.scalars().first()
-
-        if not existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Oops! looks like the user does not exist. Try again?",
-            )
 
     post.title = updated_post.title
     post.content = updated_post.content
-    post.user_id = updated_post.user_id
 
     await db.commit()
     await db.refresh(post, attribute_names=["author"])
@@ -169,7 +167,10 @@ async def update_post_full(
 
 @router.patch("/{post_id}", response_model=PostResponse)
 async def update_post_partial(
-    post_id: int, updated_post: PostUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+    post_id: int,
+    updated_post: PostUpdate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     "/api/posts/{post_id}"
@@ -177,6 +178,9 @@ async def update_post_partial(
     optional for this update
 
     NOTE:
+    - "current_user" is a dependecy for authorization, it protects this route,
+      ensuring only authenticated users can access it, else they get a 401
+      Unauthorized error. As such, no need to verify user exists first.
     - "selectinload()": allows for eargely loading in the async sqlite session,
       hence the request is able to access "models.Post.author", lest it would
       return and error
@@ -197,6 +201,13 @@ async def update_post_partial(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Oops! Looks like the post does not exist. Try again?",
+        )
+
+    # cheki kama user_id's zinamatch
+    if post.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Oops! Looks like you are not authorized to update this post.",
         )
 
     # overwrites only the data fields passed in by the user, and not update all
@@ -213,7 +224,11 @@ async def update_post_partial(
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def delete_post_by_id(
+    post_id: int,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """
     "/api/posts/{post_id}"
     deletes a post in the application based on the "post_id" passed in.
@@ -221,6 +236,11 @@ async def delete_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(ge
     does not return any data, but if successful, the response status code is
     204, which means the intended action has been successfully perfomred, which
     in this case means that the post has been deleted.
+
+    NOTE:
+    - "current_user" is a dependecy for authorization, it protects this route,
+      ensuring only authenticated users can access it, else they get a 401
+      Unauthorized error. As such, no need to verify user exists first.
     """
     data = await db.execute(select(models.Post).where(models.Post.id == post_id))
     existing_post = data.scalars().first()
@@ -229,6 +249,13 @@ async def delete_post_by_id(post_id: int, db: Annotated[AsyncSession, Depends(ge
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Oops! Post not found. Try again?",
+        )
+
+    # cheki kama user_id's zinamatch
+    if existing_post.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Oops! Looks like you are not authorized to delete this post.",
         )
 
     await db.delete(existing_post)

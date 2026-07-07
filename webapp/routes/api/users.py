@@ -33,6 +33,7 @@ from webapp.schemas.users import (
     UserUpdate,
 )
 from webapp.schemas.posts import PostResponse
+from webapp.utils.auth import get_current_user
 from webapp.utils.passwords import PasswordUtils
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -144,13 +145,22 @@ async def get_user_posts_by_id(
 
 @router.patch("/{user_id}", response_model=UserPrivateResponse)
 async def update_user(
-    user_id: int, updated_user: UserUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+    user_id: int,
+    updated_user: UserUpdate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     "/api/users/{user_id}"
     updates a users information, based on the "user_id" passed in as a parameter
     uses the "patch" protocol. all fields are optional for this update.
     """
+    if user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Oh no! Looks like you are not authorized to update this user.",
+        )
+
     data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
@@ -198,7 +208,11 @@ async def update_user(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def delete_user_by_id(
+    user_id: int,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """
     "/api/users/{user_id}"
     endpoint to delete user from the application using the "user_id" passed in.
@@ -207,6 +221,12 @@ async def delete_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(ge
     204, which means action has successfully been performed, which in this case
     means user account has been deleted.
     """
+    if user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Oh no! Looks like you are not authorized to delete this user.",
+        )
+
     data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
