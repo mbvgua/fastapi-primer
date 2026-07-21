@@ -1,13 +1,12 @@
 """
-this file defines our database tables using SQLAlchemy ORM(Object Relational
-Mapping)
+define our database tables using SQLAlchemy ORM(Object Relational Mapping)
 
 if you're on an older Python version, <3.14, you'd need to place
 `from __future__ import annotations` at the top of your imports to allow
 Python to perform forward-referencing of Posts table from the Users table, i.e
 referencing a table before it is created. this is now default in Python >=3.14.
 
-this is similar to sth called hoisting in javascript ecosystem
+this is similar to hoisting in javascript ecosystem
 """
 
 from datetime import UTC, datetime

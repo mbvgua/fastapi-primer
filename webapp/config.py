@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     - "algorithm" defines the hashing algirithm to be used
     - "access_token_expires_in_minutes" defines how long before token generated
       expires and needs to be refreshed
-
     """
 
     model_config = SettingsConfigDict(
@@ -27,7 +26,6 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
-
     secret_key: SecretStr = SecretStr(secrets.token_hex(32))
     algorithm: str = "HS256"
     access_token_expiration_minutes: int = 30

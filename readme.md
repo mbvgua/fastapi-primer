@@ -14,8 +14,8 @@ Core technologies learnt:
 - [x] making your app asynchronous
 - [x] routers with APIRouter
 - [x] forms
-- [ ] authentication: registration & login
-- [ ] authorization: protecting routes
+- [x] authentication: registration & login
+- [x] authorization: protecting routes
 - [ ] file uploads: image processing , validation & storage
 - [ ] pagination
 - [ ] password resets & background processes
@@ -27,7 +27,6 @@ Core technologies learnt:
 
 ## Detours
 
-Tried switching up the application by:
-
 - thorough modularization of the application earlier on. Was accustomed to the good old factory settings from flask, hence applied that methodology here.
 - implement code reusability by defining a "utils" directory, where I placed small Classes & functions for reuse.
+- implement oauth with google

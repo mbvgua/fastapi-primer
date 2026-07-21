@@ -21,8 +21,7 @@ NOTE:
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-# tell slqlite where to connect
-# +aiosqlite tells to which asynchronous driver
+# tell slqlite where to connect. +aiosqlite tells to which asynchronous driver
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./blog.db"
 
 engine = create_async_engine(

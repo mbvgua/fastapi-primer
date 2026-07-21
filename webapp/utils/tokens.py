@@ -8,8 +8,8 @@ from webapp.config import settings
 class TokenUtils:
     """
     actions perfomred on tokens. has two methods:
-        - create_access_token
-        - verify_access_token
+        - create_access_token()
+        - verify_access_token()
     """
 
     @staticmethod
