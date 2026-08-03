@@ -15,7 +15,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from webapp.schemas.users import UserResponse
+from webapp.schemas.users import UserPublicResponse
 
 
 class PostBase(BaseModel):
@@ -24,18 +24,17 @@ class PostBase(BaseModel):
     the PostCreate and PostResponse schemas.
     """
 
-    title: str = Field(min_length=5, max_length=50)
+    title: str = Field(min_length=5, max_length=100)
     content: str = Field(min_length=10)
 
 
 class PostCreate(PostBase):
     """
-    inherits from PostBase schema. add a 'user_id' field which is essenetial
-    for anyone creating a new post. helps ensure they are in they are already
-    in the system
+    inherits from PostBase schema. the user_id will now be determined from the
+    user token passed in, hence one cannot claim to be someone they're not
     """
 
-    user_id: int  # HACK: before adding auth
+    pass
 
 
 class PostResponse(PostBase):
@@ -51,4 +50,20 @@ class PostResponse(PostBase):
     id: int
     user_id: int
     date_posted: datetime
-    author: UserResponse
+    author: UserPublicResponse
+
+
+class PostUpdate(BaseModel):
+    """
+    inherits from the BaseModel, since its an update, it makes all fields
+    optional. If it were to inherit from the PostBase schema, it would mean
+    overwriting them, which causes errors.
+
+    NOTE:
+    - since the inputs are optional, they have to have a 'default' value
+    - we do not include the 'id' value for update as that would change
+      ownership of the posts
+    """
+
+    title: str | None = Field(default=None, min_length=5, max_length=50)
+    content: str | None = Field(default=None, min_length=10)

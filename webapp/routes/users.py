@@ -1,6 +1,8 @@
 """
-contains routes for the /users endpoints. these are not included in the
-documentation docs, since they return formatted output(boilerplate html & css)
+contains routes for the "/users" endpoints.
+
+these routes will not be included in the documentation docs, since they
+return formatted output in html & css.
 
 endpoints included here are:
     * CREATE:
@@ -12,39 +14,56 @@ endpoints included here are:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy import select
-from starlette.status import HTTP_404_NOT_FOUND
 
-from webapp.database import get_db
-from webapp import models
+from webapp.database.config import get_db
+from webapp.database import models
 from webapp.main import templates
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users views"], include_in_schema=False)
 
 
-@router.get("/{user_id}/posts", include_in_schema=False)
-def get_user_posts_by_id(
-    request: Request, user_id: int, db: Annotated[Session, Depends(get_db)]
+@router.get("/{user_id}/posts")
+async def get_user_posts_by_id(
+    request: Request, user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    returns all posts uploaded by a given user, based on the 'user_id' passed
-    in as a parameter. if no posts were uploaded by the given user, appropriate
+    "/users/{user_id}/posts"
+    returns all posts uploaded by a given user.
+
+    filters these based on the "user_id" passed in as a parameter in the url
+    request. if no posts were uploaded by the given user, appropriate
     error message is returned
+
+    NOTE:
+    - "selectinload()": allows for eargely loading in the async sqlite session,
+      hence the request is able to access "models.Post.author", lest it would
+      return and error
+    - the first query does not need a "selectinload" method since we are not
+      accessing any relationships from the "Users" table. the second query does
+      however need it
+    - "order_by()": allows ordering by most recent post
     """
 
-    data = db.execute(select(models.User).where(models.User.id == user_id))
+    data = await db.execute(select(models.User).where(models.User.id == user_id))
     existing_user = data.scalars().first()
 
     # fail first, fail loudly, keep success clean
     if not existing_user:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Looks like the user does not exist. Try again?",
         )
 
-    data = db.execute(select(models.Post).where(models.Post.user_id == user_id))
+    data = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.user_id == user_id)
+        .order_by(models.Post.date_posted.desc())
+    )
     posts = data.scalars().all()
 
     return templates.TemplateResponse(
@@ -56,3 +75,12 @@ def get_user_posts_by_id(
             "title": f"{existing_user.username.title()}'s Posts",
         },
     )
+
+
+@router.get("/account")
+async def account_page(request: Request):
+    """
+    less goo
+    """
+    title: str = "Account"
+    return templates.TemplateResponse(request, "account.html", {"title": title})

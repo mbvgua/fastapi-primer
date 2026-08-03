@@ -10,12 +10,12 @@ Core technologies learnt:
 - [x] validation and error handling
 - [x] pydantic schemas & models for data validation
 - [x] using SQLAlchemy ORM
-- [ ] performing CRUD(Create, Read, Update, Delete) operations
-- [ ] making your app asynchronous
-- [ ] routers with APIRouter
-- [ ] forms
-- [ ] authentication: registration & login
-- [ ] authorization: protecting routes
+- [x] performing CRUD(Create, Read, Update, Delete) operations
+- [x] making your app asynchronous
+- [x] routers with APIRouter
+- [x] forms
+- [x] authentication: registration & login
+- [x] authorization: protecting routes
 - [ ] file uploads: image processing , validation & storage
 - [ ] pagination
 - [ ] password resets & background processes
@@ -24,3 +24,9 @@ Core technologies learnt:
 - [ ] testing with pytest
 - [ ] deployment with nginx & custom domains
 - [ ] deployment with docker & serverless containers
+
+## Detours
+
+- thorough modularization of the application earlier on. Was accustomed to the good old factory settings from flask, hence applied that methodology here.
+- implement code reusability by defining a "utils" directory, where I placed small Classes & functions for reuse.
+- implement oauth with google
