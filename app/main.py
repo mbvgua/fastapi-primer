@@ -16,15 +16,15 @@ from fastapi.exception_handlers import (
     request_validation_exception_handler,
 )
 
-from webapp.database.config import Base, engine
-from webapp.database import models
+from app.database.config import Base, engine
+from app.database import models
 
 
 # create our database by looking at our models and creating them, if they
 # do not exist. also, this method is idempotent hence safe to run
 # multiple times as it cleans up automatically
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """
     lifespan is a modern method in FastAPI to handle the startup and
     shutdown of events. they replace deprecated "on_startup"/"on_shutdown"
@@ -60,16 +60,16 @@ app = FastAPI(
 
 templates: Jinja2Templates = Jinja2Templates(directory="templates")  # html
 app.mount("/static", StaticFiles(directory="static"), name="static")  # css
-app.mount("/media", StaticFiles(directory="media"), name="media") # user media
+app.mount("/media", StaticFiles(directory="media"), name="media")  # user media
 
 # import & register the routes
-from webapp.routes.home import router as home_router
-from webapp.routes.posts import router as posts_router
-from webapp.routes.users import router as users_router
-from webapp.routes.auth import router as auth_router
-from webapp.api_v1.users import router as users_api_router
-from webapp.api_v1.posts import router as posts_api_router
-from webapp.api_v1.auth import router as auth_api_router
+from app.routes.pages.home import router as home_router
+from app.routes.pages.posts import router as posts_router
+from app.routes.pages.users import router as users_router
+from app.routes.pages.auth import router as auth_router
+from app.routes.api_v1.users import router as users_api_router
+from app.routes.api_v1.posts import router as posts_api_router
+from app.routes.api_v1.auth import router as auth_api_router
 
 app.include_router(home_router)
 app.include_router(users_router)

@@ -24,17 +24,17 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from webapp.database import models
-from webapp.database.config import get_db
-from webapp.schemas.users import (
+from app.database import models
+from app.database.config import get_db
+from app.schemas.users import (
     UserCreate,
     UserPrivateResponse,
     UserPublicResponse,
     UserUpdate,
 )
-from webapp.schemas.posts import PostResponse
-from webapp.utils.auth import get_current_user
-from webapp.utils.passwords import PasswordUtils
+from app.schemas.posts import PostResponse
+from app.utils.auth import get_current_user
+from app.utils.passwords import PasswordUtils
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 

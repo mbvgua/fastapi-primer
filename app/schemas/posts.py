@@ -15,7 +15,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from webapp.schemas.users import UserPublicResponse
+from app.schemas.users import UserPublicResponse
 
 
 class PostBase(BaseModel):

@@ -1,2 +1,0 @@
-- add admin only routes, and ensure they are protected with .utils.auth for admin only
-- in the posts template, make all posts longer than 100 words be cut short with eslipsis, showing the rest only when I click on the whole post

@@ -1,4 +1,4 @@
-// Error message extraction from API responses
+// Error message extraction from FastAPI responses
 export function getErrorMessage(error) {
   if (typeof error.detail === "string") {
     return error.detail;
@@ -13,7 +13,7 @@ export function showModal(modalId) {
   const modal = bootstrap.Modal.getOrCreateInstance(
     document.getElementById(modalId),
   );
-  modal.show();
+  if (modal) modal.show();
   return modal;
 }
 

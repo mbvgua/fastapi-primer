@@ -14,7 +14,7 @@ endpoints included here are:
 """
 from fastapi import APIRouter, Request
 
-from webapp.main import templates
+from app.main import templates
 
 router = APIRouter(prefix="/auth", include_in_schema=False)
 

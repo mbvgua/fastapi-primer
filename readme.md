@@ -25,8 +25,9 @@ Core technologies learnt:
 - [ ] deployment with nginx & custom domains
 - [ ] deployment with docker & serverless containers
 
-## Detours
+## detours
 
-- thorough modularization of the application earlier on. Was accustomed to the good old factory settings from flask, hence applied that methodology here.
-- implement code reusability by defining a "utils" directory, where I placed small Classes & functions for reuse.
-- implement oauth with google
+- [x] thorough modularization of the application earlier on. Was accustomed to the good old factory settings from flask, hence applied that methodology here.
+- [x] implement code reusability by defining a "utils" directory, where I placed small Classes & functions for reuse.
+<!-- - [ ] implement oauth with google -->
+<!-- - [ ] add admin only routes, and ensure they are protected with .utils.auth for admin only -->

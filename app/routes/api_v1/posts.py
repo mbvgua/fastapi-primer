@@ -25,10 +25,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from webapp.database import models
-from webapp.database.config import get_db
-from webapp.schemas.posts import PostCreate, PostResponse, PostUpdate
-from webapp.utils.auth import get_current_user
+from app.database import models
+from app.database.config import get_db
+from app.schemas.posts import PostCreate, PostResponse, PostUpdate
+from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 

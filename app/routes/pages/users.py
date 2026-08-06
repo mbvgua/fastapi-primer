@@ -19,9 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
-from webapp.database.config import get_db
-from webapp.database import models
-from webapp.main import templates
+from app.database.config import get_db
+from app.database import models
+from app.main import templates
 
 router = APIRouter(prefix="/users", tags=["users views"], include_in_schema=False)
 
@@ -32,7 +32,7 @@ async def get_user_posts_by_id(
 ):
     """
     "/users/{user_id}/posts"
-    returns all posts uploaded by a given user.
+    returns all posts uploaded by a given user in descending order
 
     filters these based on the "user_id" passed in as a parameter in the url
     request. if no posts were uploaded by the given user, appropriate

@@ -25,9 +25,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
-from webapp.database import models
-from webapp.database.config import get_db
-from webapp.main import templates
+from app.database import models
+from app.database.config import get_db
+from app.main import templates
 
 router = APIRouter(prefix="/posts", tags=["post views"], include_in_schema=False)
 

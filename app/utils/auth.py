@@ -4,9 +4,9 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from webapp.database.config import get_db
-from webapp.database import models
-from webapp.utils.tokens import TokenUtils
+from app.database.config import get_db
+from app.database import models
+from app.utils.tokens import TokenUtils
 
 # extract token from authorization header
 # "tokenUrl" MUST match our auth route

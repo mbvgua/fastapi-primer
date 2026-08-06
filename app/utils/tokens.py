@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 
-from webapp.config import settings
+from app.config import settings
 
 
 class TokenUtils:
