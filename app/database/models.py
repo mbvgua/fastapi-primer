@@ -66,12 +66,12 @@ class User(Base):
         """
         decorator ensures that if a user *does* upload an image, that is what
         is returned. if not, it returns the default image, that is used by all
-        who have'nt uploaded an image
+        who have not uploaded an image
 
-        separating the /static(media shipped with our application) and the /media
-        (madia uploaded by users) directories, it helps to have a clear
-        division, this makes other operations such as backups & deployments
-        much easier
+        separating the "/static" (media shipped with our application) and the
+        "/media" (media uploaded by users) directories, it helps to have a
+        clear division, this makes other operations such as backups &
+        deployments much easier
         """
         if self.image_file:
             return f"/media/profile_pics/{self.image_file}"

@@ -82,11 +82,12 @@ class UserUpdate(BaseModel):
     - since the inputs are optional, they have to have a 'default' value
     - we do not include the 'id' value for update as that would change
       ownership of the posts
+    - not handle "image_file" updates, as there are dedicated routes that
+      handle that entirely, with appropriate validation and auth
     """
 
     username: str | None = Field(default=None, min_length=1, max_length=50)
     email: EmailStr | None = Field(default=None, max_length=100)
-    image_file: str | None = Field(default=None, min_length=1)
 
 
 class UserTokenResponse(BaseModel):

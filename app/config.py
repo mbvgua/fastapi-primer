@@ -26,9 +26,13 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
+
     secret_key: SecretStr = SecretStr(secrets.token_hex(32))
     algorithm: str = "HS256"
     access_token_expiration_minutes: int = 30
+
+    # define max image upload size(5mb)
+    max_upload_size_bytes: int = 5 * 1024 * 1024
 
 
 settings = Settings()
