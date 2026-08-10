@@ -20,14 +20,20 @@ endpoints included here are:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import models
+from app.config import settings
 from app.database.config import get_db
-from app.schemas.posts import PostCreate, PostResponse, PostUpdate
+from app.schemas.posts import (
+    PostCreate,
+    PostResponse,
+    PostUpdate,
+    PaginatedPostResponse,
+)
 from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
@@ -61,8 +67,12 @@ async def create_post(
     return new_post
 
 
-@router.get("", response_model=list[PostResponse])
-async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
+@router.get("", response_model=PaginatedPostResponse)
+async def get_posts(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
+):
     """
     "/api/posts"
     returns all posts in database
@@ -73,15 +83,34 @@ async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
       return and error
     - "order_by()": arranges them in descending order such that newest posts
       come first.
+    - it implements pagination via limit...offset. skip(offset) and its
+      defined to be > 0. the default value is 0.
+      limit is defined to be >1 and <100, its default is 10.
     """
+
+    count_result = await db.execute(select(func.count()).select_from(models.Post))
+    total_posts = count_result.scalar() or 0
+
     data = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .order_by(models.Post.date_posted.desc())
+        .offset(skip)
+        .limit(limit)
     )
     posts = data.scalars().all()
 
-    return posts
+    # true if skipped + length of posts < total posts. else false since all
+    # have been returned
+    has_more = skip + len(posts) < total_posts
+
+    return PaginatedPostResponse(
+        posts=[PostResponse.model_validate(post) for post in posts],
+        total=total_posts,
+        skip=skip,
+        limit=limit,
+        has_more=has_more,
+    )
 
 
 @router.get("/{post_id}")

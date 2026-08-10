@@ -7,6 +7,7 @@ below are validation schemas for the posts model. they include:
     - PostBase
     - PostCreate
     - PostResponse
+    - PaginatedPostResponse
 
 these schemas are enforced by fastapi and generated automaticaly in the docs
 """
@@ -67,3 +68,15 @@ class PostUpdate(BaseModel):
 
     title: str | None = Field(default=None, min_length=5, max_length=50)
     content: str | None = Field(default=None, min_length=10)
+
+class PaginatedPostResponse(BaseModel):
+    """
+    inherits from the BaseModel. it returns data essential for making the post
+    list page paginated, returning data sequentially.
+    """
+
+    posts: list[PostResponse]
+    total: int
+    skip: int
+    limit: int
+    has_more: bool

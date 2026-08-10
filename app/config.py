@@ -34,5 +34,8 @@ class Settings(BaseSettings):
     # define max image upload size(5mb)
     max_upload_size_bytes: int = 5 * 1024 * 1024
 
+    # pagination
+    posts_per_page: int = 10
+
 
 settings = Settings()

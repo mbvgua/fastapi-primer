@@ -17,9 +17,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.database.config import get_db
+from app.config import settings
 from app.database import models
 from app.main import templates
 
@@ -58,13 +59,22 @@ async def get_user_posts_by_id(
             detail="Looks like the user does not exist. Try again?",
         )
 
+    count_result = await db.execute(
+        select(func.count())
+        .select_from(models.Post)
+        .where(models.Post.user_id == user_id)
+    )
+    total_posts = count_result.scalar() or 0
+
     data = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.user_id == user_id)
         .order_by(models.Post.date_posted.desc())
+        .limit(settings.posts_per_page)
     )
     posts = data.scalars().all()
+    has_more = len(posts) < total_posts
 
     return templates.TemplateResponse(
         request,
@@ -73,6 +83,8 @@ async def get_user_posts_by_id(
             "posts": posts,
             "user": existing_user,
             "title": f"{existing_user.username.title()}'s Posts",
+            "limit": settings.posts_per_page,
+            "has_more": has_more,
         },
     )
 

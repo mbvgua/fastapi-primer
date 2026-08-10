@@ -20,7 +20,7 @@ endpoints included here are:
 from typing import Annotated
 
 from PIL import UnidentifiedImageError
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -34,7 +34,7 @@ from app.schemas.users import (
     UserPublicResponse,
     UserUpdate,
 )
-from app.schemas.posts import PostResponse
+from app.schemas.posts import PaginatedPostResponse, PostResponse
 from app.utils.auth import get_current_user
 from app.utils.images import ImageUtils
 from app.utils.passwords import PasswordUtils
@@ -112,9 +112,12 @@ async def get_user_by_id(user_id: int, db: Annotated[AsyncSession, Depends(get_d
     return existing_user
 
 
-@router.get("/{user_id}/posts", response_model=list[PostResponse])
+@router.get("/{user_id}/posts", response_model=PaginatedPostResponse)
 async def get_user_posts_by_id(
-    user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
+    user_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
 ):
     """
     "/api/users/{user_id}/posts"
@@ -126,6 +129,9 @@ async def get_user_posts_by_id(
     - "selectinload()": allows for eargely loading in the async sqlite session,
       hence the request is able to access "models.Post.author", lest it would
       return and error
+    - it implements pagination via limit...offset. skip(offset) and its
+      defined to be > 0. the default value is 0.
+      limit is defined to be >1 and <100, its default is 10.
     """
 
     data = await db.execute(select(models.User).where(models.User.id == user_id))
@@ -137,14 +143,31 @@ async def get_user_posts_by_id(
             detail="Oops! Looks like the user does not exist, try again?",
         )
 
+    count_result = await db.execute(
+        select(func.count())
+        .select_from(models.Post)
+        .where(models.Post.user_id == user_id)
+    )
+    total_posts = count_result.scalar() or 0
+
     data = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.user_id == existing_user.id)
         .order_by(models.Post.date_posted.desc())
+        .offset(skip)
+        .limit(limit)
     )
     posts = data.scalars().all()
-    return posts
+    has_more = skip + len(posts) < total_posts
+
+    return PaginatedPostResponse(
+        posts=[PostResponse.model_validate(post) for post in posts],
+        total=total_posts,
+        skip=skip,
+        limit=limit,
+        has_more=has_more,
+    )
 
 
 @router.patch("/{user_id}", response_model=UserPrivateResponse)

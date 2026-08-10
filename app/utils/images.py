@@ -45,7 +45,7 @@ class ImageUtils:
             img = ImageOps.fit(img, (300, 300), method=Image.Resampling.LANCZOS)
 
             if img.mode in ("RGBA", "LA", "P"):
-                img = img.convert("RGBA")
+                img = img.convert("RGB")
 
             # generate unique filename for image, thus preventing filename
             # collisions

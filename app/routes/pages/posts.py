@@ -20,14 +20,16 @@ help of javascript embeded in the pages.
 
 from typing import Annotated
 
-from fastapi import Depends, Request, status, HTTPException, APIRouter
+from fastapi import Depends, Request, status, HTTPException, APIRouter, Query
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
 
+from app.main import templates
+from app.config import settings
 from app.database import models
 from app.database.config import get_db
-from app.main import templates
+from app.schemas.posts import PaginatedPostResponse
 
 router = APIRouter(prefix="/posts", tags=["post views"], include_in_schema=False)
 
@@ -39,6 +41,9 @@ async def get_posts(request: Request, db: Annotated[AsyncSession, Depends(get_db
     main url that appears upon loading the application. it returns all the posts
     currently present in the database, displayed using html and css in the
     "templates/home.html" template
+    initially the first 10posts will be rendered by the API, hence displayed
+    fast. since pagination with limit..offset has been implemented, we use
+    javascript to fetch more from the API.
 
     NOTE:
     - "selectinload": in synchronous SQLAlchemy, lazy loading just works. for
@@ -48,18 +53,39 @@ async def get_posts(request: Request, db: Annotated[AsyncSession, Depends(get_db
       loading is not supported hence the above will result in errors; this is
       fixed by eagerly loading! "selectinload" enables this by telling
       SQLAlchemy to load things immediately alongside the main query.
+    - it implements pagination via limit...offset. since we expect the default
+      home page to always have some posts, there will be no offset, only limit,
+      that will beimplemented by a "Load more" button in the templates.
+      limit is defined to be >1 and <100, its default is 10.
     """
 
     title: str = "Homepage"
+
+    count_result = await db.execute(select(func.count()).select_from(models.Post))
+    total_posts = count_result.scalar() or 0
+
     data = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .order_by(models.Post.date_posted.desc())
+        .limit(settings.posts_per_page)
     )
     posts = data.scalars().all()
 
+    # true if skipped + length of posts < total posts. else false since all
+    # have been returned
+    has_more = len(posts) < total_posts
+
     return templates.TemplateResponse(
-        request, "home.html", {"posts": posts, "title": title}, status.HTTP_200_OK
+        request,
+        "home.html",
+        {
+            "posts": posts,
+            "title": title,
+            "limit": settings.posts_per_page,
+            "has_more": has_more,
+        },
+        status.HTTP_200_OK,
     )
 
 
