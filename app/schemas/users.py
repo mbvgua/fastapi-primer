@@ -100,3 +100,39 @@ class UserTokenResponse(BaseModel):
 
     access_token: str
     token_type: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    """
+    inherits from the BaseModel. used in the "forgot-password" endpoint.
+    it contains:
+        - email: EmailStr
+    """
+
+    email: EmailStr = Field(max_length=120)
+
+
+class ResetPasswordRequest(BaseModel):
+    """
+    inherits from the BaseModel. used by logged out users, when they click the
+    link in an email, and submit their new password.
+    it contains:
+        - token: str
+        - new_password:str
+    """
+
+    token: str
+    new_password: str = Field(min_length=8)
+
+
+class ChangePasswordRequest(BaseModel):
+    """
+    inherits from the BaseModel. used by logged in users, when they click the
+    option to change their password while within the application.
+    it contains:
+        - current_password: str
+        - new_password:str
+    """
+
+    current_password: str
+    new_password: str = Field(min_length=8)

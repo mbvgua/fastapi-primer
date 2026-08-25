@@ -33,3 +33,6 @@ Core technologies learnt:
 - [ ] implement oauth with google
 - [ ] add protected admin only routes for admins only
 - [ ] add an admin panel
+- [x] used Resend instead of MailTrap
+- [ ] when user is logged in and they change their password, all prior sessions must be terminated. for security
+- [ ] use a taskque for emails, although not critical. e.g Celery, Rabitt Mq

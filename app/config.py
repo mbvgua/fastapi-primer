@@ -37,5 +37,18 @@ class Settings(BaseSettings):
     # pagination
     posts_per_page: int = 10
 
+    # password reset emails need to expire quickly
+    reset_expiration_minutes: int = 30
+
+    mail_server: str
+    mail_port: int
+    mail_username: str
+    mail_password: SecretStr = SecretStr("")
+    mail_from: str
+    mail_use_tls: bool
+
+    # where reset pass page will be located in frontend
+    frontend_url: str
+
 
 settings = Settings()

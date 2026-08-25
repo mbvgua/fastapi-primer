@@ -1,4 +1,6 @@
 from datetime import UTC, datetime, timedelta
+import hashlib
+import secrets
 
 import jwt
 
@@ -8,8 +10,10 @@ from app.config import settings
 class TokenUtils:
     """
     actions perfomred on tokens. has two methods:
-        - create_access_token()
-        - verify_access_token()
+        - create_access_token
+        - verify_access_token
+        - generate_reset_token
+        - hash_reset_token
     """
 
     @staticmethod
@@ -70,3 +74,27 @@ class TokenUtils:
             return None
         else:
             return payload.get("sub")
+
+    @staticmethod
+    def generate_reset_token() -> str:
+        """
+        return urlsafe token link of base64 characters thats perfect for email links
+
+        NOTE:
+        - its length must be 64 since thisis the max size we defined in our
+          database
+        """
+        return secrets.token_urlsafe(32)
+
+    @staticmethod
+    def hash_reset_token(token: str) -> str:
+        """
+        takes a token and returns its sha256. we used this here
+
+        NOTE:
+        - we used hashlib and not not argon2  like we did with our passwords
+        since inthe latter case, passwords are weak and predictable hence a string
+        has was needed tomake brute force impossible. in this case, tokens are
+        already randomized, hence a weak hash is acceptable.
+        """
+        return hashlib.sha256(token.encode()).hexdigest()

@@ -20,7 +20,7 @@ from app.database.config import Base
 class User(Base):
     """
     creates the 'users' table. It inherits from the 'Base' class found in the
-    database.py file.
+    database.config.py file.
 
     the table contains the following columns:
         * id:str    -> primary_key
@@ -29,7 +29,8 @@ class User(Base):
         * password_hash:str
         * image_file:str|None
         * image_path:str|None
-        * posts:list[Post]
+        * posts: list[Post]
+        * reset_tokens: list[PasswordResetToken]
 
     NOTE:
     - using 'Mapped' in the column definitons allows for type hints in our IDE
@@ -49,9 +50,7 @@ class User(Base):
     image_file: Mapped[str | None] = mapped_column(
         String(200), nullable=True, default=None
     )
-
-    # NOTE: we reference the 'Post' table before its created.
-    # this is called forward-referencing
+    # NOTE: we reference the 'Post' table before its created. this is called forward-referencing
     posts: Mapped[list[Post]] = relationship(
         back_populates="author",
         # NOTE: deletes user alongside all of their posts. FastAPI does
@@ -59,6 +58,9 @@ class User(Base):
         # Also, change it from cascade into making all deleted posts belong to
         # a "ghost" user, like github, reddit e.t.c
         cascade="all, delete-orphan",
+    )
+    reset_tokens: Mapped[list[PasswordResetToken]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )
 
     @property
@@ -82,7 +84,7 @@ class User(Base):
 class Post(Base):
     """
     creates the 'posts' table. It inherits from the 'Base' class found in the
-    database.py file.
+    database.config.py file.
 
     the table contains the following columns:
         * id:str    -> primary_key
@@ -111,4 +113,46 @@ class Post(Base):
     date_posted: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
+
     author: Mapped[User] = relationship(back_populates="posts")
+
+
+class PasswordResetToken(Base):
+    """
+    creates the 'password_reset_tokens' table. It inherits from the 'Base' class
+    found in the database.config.py file.
+
+    the table contains the following columns:
+        * id:str    -> primary_key
+        * user_id   -> foreign_key
+        * token_hash:str
+        * expires_at:datetime
+        * created_at:datetime
+        * user:User
+
+    NOTE:
+    - this stores our password reset tokens. we have not used our JSONWebTokens
+      for this since we need to have randomn single-use tokens that are stored
+      securely. JWTs cannot be invalidated before they expire, unless one
+      maintains a blacklist in the database. This no longer makes them secure.
+      with database stored tokens, we get a true single use behaviour by
+      deleting the token after successful resets. and we can invalidate them at
+      anytime.
+    - token_hash: only stores the hash, not the actual token. in the event of a
+      database leak, only the hash is leaked, and these are useless without the
+      actual token
+    """
+
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+    user: Mapped[User] = relationship(back_populates="reset_tokens")
