@@ -27,6 +27,8 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    database_url: str
+
     secret_key: SecretStr = SecretStr(secrets.token_hex(32))
     algorithm: str = "HS256"
     access_token_expiration_minutes: int = 30

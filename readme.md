@@ -16,10 +16,10 @@ Core technologies learnt:
 - [x] forms
 - [x] authentication: registration & login
 - [x] authorization: protecting routes
-- [ ] file uploads: image processing , validation & storage
-- [ ] pagination
-- [ ] password resets & background processes
-- [ ] database migrations with alembic & PostgreSql
+- [x] file uploads: image processing , validation & storage
+- [x] pagination
+- [x] password resets & background processes
+- [x] database migrations with alembic & ~~PostgreSql~~ MariaDb
 - [ ] moving files to the cloud with AWS S3 & Boto
 - [ ] testing with pytest
 - [ ] deployment with nginx & custom domains
@@ -36,3 +36,4 @@ Core technologies learnt:
 - [x] used Resend instead of MailTrap
 - [ ] when user is logged in and they change their password, all prior sessions must be terminated. for security
 - [ ] use a taskque for emails, although not critical. e.g Celery, Rabitt Mq
+- [ ] use MariaDB+aiomysql instead of Postgres+pscoppg. [why?](./populate_images/2026-08-27_11-19.png)

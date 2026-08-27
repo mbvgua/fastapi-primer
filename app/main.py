@@ -16,7 +16,7 @@ from fastapi.exception_handlers import (
     request_validation_exception_handler,
 )
 
-from app.database.config import Base, engine
+from app.database.config import engine
 from app.database import models
 
 
@@ -34,11 +34,10 @@ async def lifespan(_app: FastAPI):
     "Base.metadata.create_all(bind=engine)". "create_all()" was synchronous,
     hence unable to be called alongside asynchronous methods.
     lifespans allow for this
-    """
-    # startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
+    now database schema is handled by alembic and not app startup. its better
+    for migrations, which allow rollbacks and such
+    """
     yield
 
     # shutdown

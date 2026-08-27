@@ -21,14 +21,9 @@ NOTE:
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-# tell slqlite where to connect. +aiosqlite tells to which asynchronous driver
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./blog.db"
+from app.config import settings
 
-engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    # sqlite is single threaded. fastAPI can handle requests asynchronously
-    connect_args={"check_same_thread": False},
-)
+engine = create_async_engine(settings.database_url)
 
 # create transcations pools with the db
 async_session_local = async_sessionmaker(

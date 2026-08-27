@@ -6,6 +6,8 @@ all: install prod
 install:
 	@echo "Installing project dependecies..."
 	pip install -r requirements.txt
+	alembic upgrade head
+	python ./populate_db.py
 
 # test:
 # 	python ...

@@ -100,6 +100,10 @@ class Post(Base):
       where one user can have multiple posts
     - 'back_populates' links to the 'posts' column in Users, allowing one to
       perform operations like 'post.author.[username, email, id, image_file]'
+    - in likes column, "server_default" was used to prevent the database from
+      inputting "null" in the existing columns. as I was testing migrations
+      later on, this column did not exist initially as thetable was created.,
+      using this better than manually editing the miggration files later on.
     """
 
     __tablename__ = "posts"
@@ -113,6 +117,7 @@ class Post(Base):
     date_posted: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
+    likes: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     author: Mapped[User] = relationship(back_populates="posts")
 

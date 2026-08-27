@@ -200,9 +200,7 @@ async def reset_password(
         )
 
     # if token exists, actually check if its expired
-    # HACK: sqlite strip timezone info in columns, the replace adds it back in
-    # not needed in other datbases
-    if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
+    if reset_token.expires_at < datetime.now(UTC):
         await db.delete(reset_token)
         await db.commit()
         raise HTTPException(
