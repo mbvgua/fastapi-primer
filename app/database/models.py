@@ -15,6 +15,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.config import Base
+from app.config import settings
 
 
 class User(Base):
@@ -55,7 +56,7 @@ class User(Base):
         back_populates="author",
         # NOTE: deletes user alongside all of their posts. FastAPI does
         # this by default, so this is just a precaution for older versions.
-        # Also, change it from cascade into making all deleted posts belong to
+        # TODO: Also, change it from cascade into making all deleted posts belong to
         # a "ghost" user, like github, reddit e.t.c
         cascade="all, delete-orphan",
     )
@@ -76,7 +77,7 @@ class User(Base):
         deployments much easier
         """
         if self.image_file:
-            return f"/media/profile_pics/{self.image_file}"
+            return f"https://{settings.s3_bucket_name}.s3.{settings.s3_region}.amazonaws.com/profile_pics/{self.image_file}"
 
         return "/static/profile_pics/default.jpg"
 

@@ -20,7 +20,7 @@ Core technologies learnt:
 - [x] pagination
 - [x] password resets & background processes
 - [x] database migrations with alembic & ~~PostgreSql~~ MariaDb
-- [ ] moving files to the cloud with AWS S3 & Boto
+- [x] moving files to the cloud with AWS S3 & Boto
 - [ ] testing with pytest
 - [ ] deployment with nginx & custom domains
 - [ ] deployment with docker & serverless containers

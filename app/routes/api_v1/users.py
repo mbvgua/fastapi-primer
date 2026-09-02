@@ -25,6 +25,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette.concurrency import run_in_threadpool
+from botocore.exceptions import ClientError
 
 from app.database import models
 from app.database.config import get_db
@@ -36,7 +37,11 @@ from app.schemas.users import (
 )
 from app.schemas.posts import PaginatedPostResponse, PostResponse
 from app.utils.auth import get_current_user
-from app.utils.images import ImageUtils
+from app.utils.images import (
+    delete_profile_image,
+    process_profile_image,
+    upload_profile_image,
+)
 from app.utils.passwords import PasswordUtils
 from app.config import settings
 
@@ -270,7 +275,7 @@ async def delete_user_by_id(
 
     # delete profile pic only if everythin is successful
     if old_filename:
-        ImageUtils.delete_profile_image(old_filename)
+        await delete_profile_image(old_filename)
 
 
 @router.patch("/{user_id}/picture", response_model=UserPrivateResponse)
@@ -308,14 +313,23 @@ async def upload_profile_picture(
 
     # if file is of correct size, process it
     try:
-        new_filename = await run_in_threadpool(
-            ImageUtils.process_profile_image, content
+        processed_bytes, new_filename = await run_in_threadpool(
+            process_profile_image, content
         )
     except UnidentifiedImageError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid image file. Please upload a valid image of type JPEG, PNG, GIF, WebP",
         )
+
+    # upload to s3
+    try:
+        await upload_profile_image(processed_bytes, new_filename)
+    except ClientError as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload image. Please try again",
+        ) from err
 
     old_filename = current_user.image_file
     current_user.image_file = new_filename
@@ -325,7 +339,7 @@ async def upload_profile_picture(
 
     # only after a succesful commit do we delete the old filename
     if old_filename:
-        ImageUtils.delete_profile_image(old_filename)
+        await delete_profile_image(old_filename)
 
     return current_user
 
@@ -361,6 +375,6 @@ async def delete_profile_picture(
     await db.refresh(current_user)
 
     # delete old profile pic only after successful update
-    ImageUtils.delete_profile_image(old_filename)
+    await delete_profile_image(old_filename)
 
     return current_user

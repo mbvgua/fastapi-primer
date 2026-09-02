@@ -59,7 +59,6 @@ app = FastAPI(
 
 templates: Jinja2Templates = Jinja2Templates(directory="templates")  # html
 app.mount("/static", StaticFiles(directory="static"), name="static")  # css
-app.mount("/media", StaticFiles(directory="media"), name="media")  # user media
 
 # import & register the routes
 from app.routes.pages.home import router as home_router
