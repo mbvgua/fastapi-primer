@@ -16,17 +16,24 @@ Core technologies learnt:
 - [x] forms
 - [x] authentication: registration & login
 - [x] authorization: protecting routes
-- [ ] file uploads: image processing , validation & storage
-- [ ] pagination
-- [ ] password resets & background processes
-- [ ] database migrations with alembic & PostgreSql
-- [ ] moving files to the cloud with AWS S3 & Boto
+- [x] file uploads: image processing , validation & storage
+- [x] pagination
+- [x] password resets & background processes
+- [x] database migrations with alembic & ~~PostgreSql~~ MariaDb
+- [x] moving files to the cloud with AWS S3 & Boto
 - [ ] testing with pytest
 - [ ] deployment with nginx & custom domains
 - [ ] deployment with docker & serverless containers
 
-## Detours
+## detours
 
-- thorough modularization of the application earlier on. Was accustomed to the good old factory settings from flask, hence applied that methodology here.
-- implement code reusability by defining a "utils" directory, where I placed small Classes & functions for reuse.
-- implement oauth with google
+- [x] thorough modularization of the application earlier on. Was accustomed to the good old factory settings from flask, hence applied that methodology here.
+- [x] implement code reusability by defining a "utils" directory, where I placed small Classes & functions for reuse.
+- [ ] do tokens expire even when a user is active? figure out to to see if user is active in the frontend and prolong token expiration
+- [ ] implement oauth with google
+- [ ] add protected admin only routes for admins only
+- [ ] add an admin panel
+- [x] used Resend instead of MailTrap
+- [ ] when user is logged in and they change their password, all prior sessions must be terminated. for security
+- [ ] use a taskque for emails, although not critical. e.g Celery, Rabitt Mq
+- [ ] use MariaDB+aiomysql instead of Postgres+pscoppg. [why?](./populate_images/2026-08-27_11-19.png)
