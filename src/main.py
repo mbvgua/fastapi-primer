@@ -8,16 +8,19 @@ once the server has been started, api documentation can be found at:
 """
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, status
+from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
 )
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.config import engine
-from app.database import models
+from src.database.config import engine, get_db
+from src.database import models
 
 
 # create our database by looking at our models and creating them, if they
@@ -61,13 +64,13 @@ templates: Jinja2Templates = Jinja2Templates(directory="templates")  # html
 app.mount("/static", StaticFiles(directory="static"), name="static")  # css
 
 # import & register the routes
-from app.routers.pages.home import router as home_router
-from app.routers.pages.posts import router as posts_router
-from app.routers.pages.users import router as users_router
-from app.routers.pages.auth import router as auth_router
-from app.routers.api_v1.users import router as users_api_router
-from app.routers.api_v1.posts import router as posts_api_router
-from app.routers.api_v1.auth import router as auth_api_router
+from src.views.home import router as home_router
+from src.views.posts import router as posts_router
+from src.views.users import router as users_router
+from src.views.auth import router as auth_router
+from src.api.users import router as users_api_router
+from src.api.posts import router as posts_api_router
+from src.api.auth import router as auth_api_router
 
 app.include_router(home_router)
 app.include_router(users_router)
@@ -138,3 +141,21 @@ async def validation_exception_handler(
         },
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     )
+
+
+# health checks
+@app.get("/health")
+async def health_check(db: Annotated[AsyncSession, Depends(get_db)]):
+    """
+    healthcheck ensures the application is still up and running, with no faults
+    whatsoever. used commonly byload balancer, to get an idea of how to scale
+    app
+    """
+    try:
+        await db.execute(text("SELECT 1;"))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailbale",
+        ) from e
+    return {"status": "healthy"}

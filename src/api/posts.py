@@ -25,16 +25,16 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database import models
-from app.config import settings
-from app.database.config import get_db
-from app.schemas.posts import (
+from src.database import models
+from src.config import settings
+from src.database.config import get_db
+from src.schemas.posts import (
     PostCreate,
     PostResponse,
     PostUpdate,
     PaginatedPostResponse,
 )
-from app.utils.auth import get_current_user
+from src.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 

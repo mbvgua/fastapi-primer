@@ -21,7 +21,7 @@ Core technologies learnt:
 - [x] password resets & background processes
 - [x] database migrations with alembic & ~~PostgreSql~~ MariaDb
 - [x] moving files to the cloud with AWS S3 & Boto
-- [ ] testing with pytest
+- [x] testing with pytest
 - [ ] deployment with nginx & custom domains
 - [ ] deployment with docker & serverless containers
 
@@ -36,4 +36,4 @@ Core technologies learnt:
 - [x] used Resend instead of MailTrap
 - [ ] when user is logged in and they change their password, all prior sessions must be terminated. for security
 - [ ] use a taskque for emails, although not critical. e.g Celery, Rabitt Mq
-- [ ] use MariaDB+aiomysql instead of Postgres+pscoppg. [why?](./populate_images/2026-08-27_11-19.png)
+- [x] use MariaDB+aiomysql instead of Postgres+pscoppg. [why?](./populate_images/2026-08-27_11-19.png)

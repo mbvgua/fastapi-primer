@@ -4,7 +4,7 @@ import secrets
 
 import jwt
 
-from app.config import settings
+from src.config import settings
 
 
 class TokenUtils:

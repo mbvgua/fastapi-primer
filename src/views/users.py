@@ -19,10 +19,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func, select
 
-from app.database.config import get_db
-from app.config import settings
-from app.database import models
-from app.main import templates
+from src.database.config import get_db
+from src.config import settings
+from src.database import models
+from src.main import templates
 
 router = APIRouter(prefix="/users", tags=["users views"], include_in_schema=False)
 

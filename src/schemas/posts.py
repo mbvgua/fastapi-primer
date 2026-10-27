@@ -16,7 +16,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.users import UserPublicResponse
+from src.schemas.users import UserPublicResponse
 
 
 class PostBase(BaseModel):
@@ -68,6 +68,7 @@ class PostUpdate(BaseModel):
 
     title: str | None = Field(default=None, min_length=5, max_length=50)
     content: str | None = Field(default=None, min_length=10)
+
 
 class PaginatedPostResponse(BaseModel):
     """
