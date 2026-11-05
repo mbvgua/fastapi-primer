@@ -7,7 +7,7 @@
                 "s3:PutObject",
                 "s3:DeleteObject"
             ],
-            "Resource": "arn:aws:s3:::your-bucket-arn-here/profile_pics/*"
+            "Resource": "arn:aws:s3:::<your-bucket-arn-here>/profile_pics/*"
         }
     ]
 }
