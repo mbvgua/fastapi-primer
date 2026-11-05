@@ -27,23 +27,23 @@ from sqlalchemy.orm import selectinload
 from starlette.concurrency import run_in_threadpool
 from botocore.exceptions import ClientError
 
-from app.database import models
-from app.database.config import get_db
-from app.schemas.users import (
+from src.database import models
+from src.database.config import get_db
+from src.schemas.users import (
     UserCreate,
     UserPrivateResponse,
     UserPublicResponse,
     UserUpdate,
 )
-from app.schemas.posts import PaginatedPostResponse, PostResponse
-from app.utils.auth import get_current_user
-from app.utils.images import (
+from src.schemas.posts import PaginatedPostResponse, PostResponse
+from src.utils.auth import get_current_user
+from src.utils.images import (
     delete_profile_image,
     process_profile_image,
     upload_profile_image,
 )
-from app.utils.passwords import PasswordUtils
-from app.config import settings
+from src.utils.passwords import PasswordUtils
+from src.config import settings
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 

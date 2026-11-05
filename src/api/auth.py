@@ -23,20 +23,20 @@ from sqlalchemy import func, select
 from sqlalchemy import delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import models
-from app.database.config import get_db
-from app.schemas.users import (
+from src.database import models
+from src.database.config import get_db
+from src.schemas.users import (
     UserPrivateResponse,
     UserTokenResponse,
     ForgotPasswordRequest,
     ChangePasswordRequest,
     ResetPasswordRequest,
 )
-from app.utils.auth import get_current_user
-from app.utils.passwords import PasswordUtils
-from app.utils.tokens import TokenUtils
-from app.utils.emails import send_password_reset_email
-from app.config import settings
+from src.utils.auth import get_current_user
+from src.utils.passwords import PasswordUtils
+from src.utils.tokens import TokenUtils
+from src.utils.emails import send_password_reset_email
+from src.config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

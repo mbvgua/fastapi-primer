@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+create the first accounts and, some of demo data.
+
+usage:
+    python -m scripts.seed
+"""
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -5,11 +13,11 @@ from pathlib import Path
 import httpx
 from sqlalchemy import delete, select, update
 
-from app.database import models
-from app.database.config import async_session_local, engine
-from app.main import app
-from app.config import settings
-from app.utils.images import _get_s3_client
+from src.database import models
+from src.database.config import async_session_local, engine
+from src.main import app
+from src.config import settings
+from src.utils.images import _get_s3_client
 
 POPULATE_IMAGES_DIR = Path("populate_images")
 

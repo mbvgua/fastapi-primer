@@ -14,8 +14,8 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.config import Base
-from app.config import settings
+from src.database.config import Base
+from src.config import settings
 
 
 class User(Base):

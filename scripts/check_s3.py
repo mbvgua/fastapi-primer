@@ -11,8 +11,8 @@ from io import BytesIO
 
 from botocore.exceptions import BotoCoreError, ClientError
 
-from app.config import settings
-from app.utils.images import _get_s3_client
+from src.config import settings
+from src.utils.images import _get_s3_client
 
 
 def check_s3_connection():

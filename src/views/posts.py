@@ -20,16 +20,16 @@ help of javascript embeded in the pages.
 
 from typing import Annotated
 
-from fastapi import Depends, Request, status, HTTPException, APIRouter, Query
+from fastapi import Depends, Request, status, HTTPException, APIRouter
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.main import templates
-from app.config import settings
-from app.database import models
-from app.database.config import get_db
-from app.schemas.posts import PaginatedPostResponse
+from src.main import templates
+from src.config import settings
+from src.database import models
+from src.database.config import get_db
+from src.schemas.posts import PaginatedPostResponse
 
 router = APIRouter(prefix="/posts", tags=["post views"], include_in_schema=False)
 

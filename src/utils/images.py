@@ -26,7 +26,7 @@ from PIL import Image, ImageOps
 import boto3
 from starlette.concurrency import run_in_threadpool
 
-from app.config import settings
+from src.config import settings
 
 
 def process_profile_image(content: bytes) -> tuple[bytes, str]:
