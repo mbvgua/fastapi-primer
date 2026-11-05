@@ -33,7 +33,5 @@ Core technologies learnt:
 - [ ] implement oauth with google
 - [ ] add protected admin only routes for admins only
 - [ ] add an admin panel
-- [x] used Resend instead of MailTrap
 - [ ] when user is logged in and they change their password, all prior sessions must be terminated. for security
-- [ ] use a taskque for emails, although not critical. e.g Celery, Rabitt Mq
-- [x] use MariaDB+aiomysql instead of Postgres+pscoppg. [why?](./populate_images/2026-08-27_11-19.png)
+- [ ] use a task queue for emails, although not critical. e.g Celery, Rabitt Mq

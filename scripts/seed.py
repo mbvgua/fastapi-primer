@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+create the first accounts and, some of demo data.
+
+usage:
+    python -m scripts.seed
+"""
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path

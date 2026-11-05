@@ -97,7 +97,7 @@ async def test_forgot_password_sends_email(client: AsyncClient):
     # NOTE: This is a common pitfall for mocking with unitest. Always mock
     # where the function is looked up, not where it is defined
     with patch(
-        "app.routers.api_v1.auth.send_password_reset_email",
+        "src.api.auth.send_password_reset_email",
         new_callable=AsyncMock,
     ) as mock_send:
         response = await client.post(

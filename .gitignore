@@ -4,5 +4,15 @@ __pycache__
 webapp/__pycache__/
 blog.db
 
+# terraform stuff
+# The provider lock file (infra/.terraform.lock.hcl) is intentionally tracked.
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/terraform.tfvars
+infra/*.tfvars.json
+crash.log
+
 # extras
-tutorial/
+.pytest_cache/
+infra/
