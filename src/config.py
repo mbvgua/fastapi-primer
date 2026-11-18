@@ -77,7 +77,7 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     """
-    this function is cleaner than just instantiating it directly, since that
-    also worked but it also brought about an error from my LSP.
+    this function is cleaner than just instantiating it directly, also it
+    caches it, such that it is defined only once, and not on every request.
     """
     return Settings()
