@@ -26,11 +26,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.main import templates
-from src.config import settings
+from src.config import get_settings
 from src.database import models
 from src.database.config import get_db
 from src.schemas.posts import PaginatedPostResponse
 
+settings = get_settings()
 router = APIRouter(prefix="/posts", tags=["post views"], include_in_schema=False)
 
 

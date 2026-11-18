@@ -43,7 +43,9 @@ from src.utils.images import (
     upload_profile_image,
 )
 from src.utils.passwords import PasswordUtils
-from src.config import settings
+from src.config import get_settings
+
+settings = get_settings()
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 

@@ -13,8 +13,10 @@ from email.message import EmailMessage
 
 import aiosmtplib
 
-from src.config import settings
+from src.config import get_settings
 from src.main import templates
+
+settings = get_settings()
 
 
 async def send_email(

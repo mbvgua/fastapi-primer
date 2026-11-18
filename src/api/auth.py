@@ -36,7 +36,9 @@ from src.utils.auth import get_current_user
 from src.utils.passwords import PasswordUtils
 from src.utils.tokens import TokenUtils
 from src.utils.emails import send_password_reset_email
-from src.config import settings
+from src.config import get_settings
+
+settings = get_settings()
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

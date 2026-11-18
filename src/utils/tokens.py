@@ -4,7 +4,9 @@ import secrets
 
 import jwt
 
-from src.config import settings
+from src.config import get_settings
+
+settings = get_settings()
 
 
 class TokenUtils:

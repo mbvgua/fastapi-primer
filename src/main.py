@@ -20,7 +20,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.config import engine, get_db
+from src.config import get_settings
 from src.database import models
+
+settings = get_settings()
 
 
 # create our database by looking at our models and creating them, if they
@@ -60,8 +63,8 @@ app = FastAPI(
     # openapi_url=None,
 )
 
-templates: Jinja2Templates = Jinja2Templates(directory="templates")  # html
-app.mount("/static", StaticFiles(directory="static"), name="static")  # css
+templates: Jinja2Templates = Jinja2Templates(directory=settings.templates_dir)  # html
+app.mount("/static", StaticFiles(directory=settings.static_dir), name="static")  # css
 
 # import & register the routes
 from src.views.home import router as home_router

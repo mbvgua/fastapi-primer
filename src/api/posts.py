@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.database import models
-from src.config import settings
+from src.config import get_settings
 from src.database.config import get_db
 from src.schemas.posts import (
     PostCreate,
@@ -36,6 +36,7 @@ from src.schemas.posts import (
 )
 from src.utils.auth import get_current_user
 
+settings = get_settings()
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 
 
