@@ -15,7 +15,9 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.config import Base
-from src.config import settings
+from src.config import get_settings
+
+settings = get_settings()
 
 
 class User(Base):
@@ -79,7 +81,7 @@ class User(Base):
         if self.image_file:
             return f"https://{settings.s3_bucket_name}.s3.{settings.s3_region}.amazonaws.com/profile_pics/{self.image_file}"
 
-        return "/static/profile_pics/default.jpg"
+        return f"{settings.static_dir}/profile_pics/default.jpg"
 
 
 class Post(Base):

@@ -1,6 +1,16 @@
+"""
+configure essential variables and configurations to be used within the app
+"""
+
+from functools import lru_cache
 import secrets
+from pathlib import Path
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# ensure paths are absolute
+BASE_DIR = Path(__file__).resolve().parent
 
 
 class Settings(BaseSettings):
@@ -33,6 +43,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expiration_minutes: int = 30
 
+    # --- filesystems
+    static_dir: Path = BASE_DIR / "static"
+    templates_dir: Path = BASE_DIR / "templates"
+
     # define max image upload size(5mb)
     max_upload_size_bytes: int = 5 * 1024 * 1024
 
@@ -60,4 +74,10 @@ class Settings(BaseSettings):
     s3_endpoint_url: str | None = None
 
 
-settings = Settings()
+@lru_cache()
+def get_settings() -> Settings:
+    """
+    this function is cleaner than just instantiating it directly, since that
+    also worked but it also brought about an error from my LSP.
+    """
+    return Settings()

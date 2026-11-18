@@ -20,10 +20,11 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func, select
 
 from src.database.config import get_db
-from src.config import settings
+from src.config import get_settings
 from src.database import models
 from src.main import templates
 
+settings = get_settings()
 router = APIRouter(prefix="/users", tags=["users views"], include_in_schema=False)
 
 
